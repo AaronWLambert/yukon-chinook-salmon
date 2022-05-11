@@ -1,0 +1,512 @@
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = function(x)ifelse(x>=60000,scientific,,),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = function(x)ifelse(x>=60000,scientific,,),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = function(x)ifelse(x>=60000,scientific,","),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+annotate_figure(unadj,
+left =  text_grob("Log Total Reconstructed Canadian Run",
+family = "serif",
+rot = 90,
+vjust = 2,
+size = 11,
+face = "plain"),
+bottom = text_grob("PSS Sonar Cummulative Passage (Unadjusted)",
+family = "serif",
+vjust = -1,
+size = 11,
+face = "plain")
+)
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = function(x)ifelse(x>=60000,scientific,NULL),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+annotate_figure(unadj,
+left =  text_grob("Log Total Reconstructed Canadian Run",
+family = "serif",
+rot = 90,
+vjust = 2,
+size = 11,
+face = "plain"),
+bottom = text_grob("PSS Sonar Cummulative Passage (Unadjusted)",
+family = "serif",
+vjust = -1,
+size = 11,
+face = "plain")
+)
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = scientific),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = scientific),
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(labels = scientific,
+limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+annotate_figure(unadj,
+left =  text_grob("Log Total Reconstructed Canadian Run",
+family = "serif",
+rot = 90,
+vjust = 2,
+size = 11,
+face = "plain"),
+bottom = text_grob("PSS Sonar Cummulative Passage (Unadjusted)",
+family = "serif",
+vjust = -1,
+size = 11,
+face = "plain")
+)
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+annotate_figure(unadj,
+left =  text_grob("Log Total Reconstructed Canadian Run",
+family = "serif",
+rot = 90,
+vjust = 2,
+size = 11,
+face = "plain"),
+bottom = text_grob("PSS Sonar Cummulative Passage (Unadjusted)",
+family = "serif",
+vjust = -1,
+size = 11,
+face = "plain")
+)
+# This is for the restricted years for comparison against the precise GSI adj
+PSS_cum_Hist<-PSS_hist %>%
+subset(Year >= 2005) %>%
+group_by(Year) %>%
+mutate(CummCount= cumsum(count))
+# Create an empty list to store plot outputs in
+p <-list()
+# For loop to create plots
+for(i in seq(from = 152, to = 212, by = 10)){
+# control variable to change day of interest
+MYDAY <- i
+test<-PSS_cum_Hist[PSS_cum_Hist$Day==MYDAY,]
+test2 <- merge(x = test, y = CAN_hist, by = "Year")
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+geom_point(aes(color =factor(Year)), show.legend = TRUE) +
+geom_smooth(method = "lm") +
+# xlab("PSS Sonar Count (Unadjusted)") +
+xlab("")+
+stat_poly_eq(small.r = TRUE)+
+# ylab("Log Total Reconstructed Canadian Run") +
+ylab("")+
+theme_classic(base_size = 12, base_family = "serif")+
+scale_y_continuous(trans = "log", labels = label_number(accuracy = 0.01))+
+scale_x_continuous(limits = c(min(test2$CummCount),max(test2$CummCount)))
+# geom_text(aes(label = Year))
+}
+unadj<-ggarrange(p$`Plot 162`,p$`Plot 172`,p$`Plot 182`,p$`Plot 192`,p$`Plot 202`,p$`Plot 212`,
+labels = c("Jun 11", " Jun 21 ", "Jul 1", "Jul 11", "Jul 21", "Jun 31", "31"),
+font.label = list(size = 12, color = "black", family = "serif"),
+vjust = 1,
+hjust = -3,
+common.legend = TRUE,
+legend = "right")
+annotate_figure(unadj,
+left =  text_grob("Log Total Reconstructed Canadian Run",
+family = "serif",
+rot = 90,
+vjust = 2,
+size = 11,
+face = "plain"),
+bottom = text_grob("PSS Sonar Cummulative Passage (Unadjusted)",
+family = "serif",
+vjust = -1,
+size = 11,
+face = "plain")
+)
+pars
+pars$curr_predPSS
+plot(pars$curr_predPSS)
+hist(pars$curr_predPSS)
+install.packages("rvest")
+library(rvest)
+library(tidyverse)
+pss_link <- https://www.adfg.alaska.gov/CF_R3/external/sites/aykdbms_website/Default.aspx
+pss_link <- https://www.adfg.alaska.gov/CF_R3/external/sites/aykdbms_website/Default.aspx
+pss_link <- "https://www.adfg.alaska.gov/CF_R3/external/sites/aykdbms_website/Default.aspx"
+pss_link
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+pss_page
+View(pss_page)
+pss_page %>% html_nodes()
+# Read in the link to the webpage for aykdbms
+pss_link <- "https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement"
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+pss_page %>% html_nodes()
+library(stringer)
+# Read in the link to the webpage for aykdbms
+pss_link <- "https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement"
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+pss_page %>% html_nodes("table")
+pss_page %>% html_nodes("table") %>% html_table(fill = TRUE)
+test<-pss_page %>% html_nodes("table") %>% html_table(fill = TRUE)
+test
+names<-pss_page %>% html_nodes("//iframe")
+names<-pss_page %>% html_nodes("iframe")
+names
+names<-pss_page %>% html_nodes("iframe") %>% html_name()
+names
+names<-pss_page %>% html_nodes("iframe") %>% html_text()
+names
+names
+names<-pss_page %>% html_nodes("iframe") %>% html_table()
+names
+names<-pss_page %>% html_nodes("iframe") %>% html_table(fill+TRUE)
+names
+names<-pss_page %>% html_nodes("iframe") %>% html_table(fill=TRUE)
+names
+library(purrr)
+names<-pss_page %>% html_nodes("Daily Escapement Table") %>% html_table(fill=TRUE)
+names
+pss_page %>% html_nodes("Daily Escapement Table") %>% html_table(fill=TRUE)
+names<-pss_page %>% html_nodes("#d\:dashboard\~p\:4bpsi8j93dl561hd\~r\:kuckmvmdkc6k5euoLinks > tbody > tr > td:nth-child(5)") %>% html_table(fill=TRUE)
+names<-pss_page %>% html_nodes("tr") %>% html_table(fill=TRUE)
+names
+?html_nodes
+install.packages("V8")
+library(V8)
+names<-pss_page %>% html_nodes("td") %>% html_table(fill=TRUE)
+library(rvest)
+library(tidyverse)
+library(purrr)
+library(V8)
+names<-pss_page %>% html_nodes("td")
+# Read in the link to the webpage for aykdbms
+pss_link <- "https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement"
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+names<-pss_page %>% html_nodes("td")
+names
+names<-pss_page %>% html_nodes("body")
+names
+names<-pss_page %>% html_nodes("body") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_nodes("body")
+names
+names<-pss_page %>% html_nodes(".SectionTableContentTD") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_nodes(".SectionTableContentTD")
+names
+names<-pss_page %>% html_nodes("SectionTableContentTD") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_nodes("SectionTableContentTD")
+names
+names<-pss_page %>% html_nodes("tr") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_nodes("tr")
+names
+names<-pss_page %>% html_nodes("table") %>% html_table(fill=TRUE)
+names
+pss_page %>% html_nodes("table")
+names<-pss_page %>% html_nodes("body") %>% html_table(fill=TRUE)
+names
+pss_page %>% html_nodes("body")
+names<-pss_page %>% html_nodes("body")
+View(names)
+names[[]]
+names[[2]]
+names[2]
+?rvest::html_element
+html_elements(pss_page)
+html_elements(names)
+html_elements(pss_link)
+pss_page$node
+pss_page$doc
+pss_page %>% html_element()
+pss_page %>% html_element("body")
+# Read in the link to the webpage for aykdbms
+pss_link <- "https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement"
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+test<-pss_page %>% html_element("body")
+test
+test<-pss_page %>% html_element("body") %>% html_attr("tr")
+test
+test<-pss_page %>% html_element("body") %>% html_attr("td")
+test
+pss_page %>% html_element("body") %>% html_attr("tbody")
+pss_page %>% html_element("body") %>% html_attr(".tbody")
+test<-pss_page %>% html_element("body")
+?V8
+boo <-V8()
+library(tidyverse)
+library(purrr)
+library(V8)
+boo <-V8()
+boo <-v8()
+boo$source("https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement")
+names<-pss_page %>% html_nodes("table") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_nodes("tbody") %>% html_table(fill=TRUE)
+names
+names<-pss_page %>% html_node("table") %>% html_table(fill=TRUE)
+pss_page %>% html_node("table")
+# Read in the link to the webpage for aykdbms
+pss_link <- "https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement"
+# Get the HTML code from the link
+pss_page <- read_html(pss_link)
+names<-pss_page %>% html_node("table") %>% html_table(fill=TRUE)
+pss_page %>% html_node("table")
+names<-pss_page %>% html_node("tbody") %>% html_table(fill=TRUE)
+pss_page %>% html_node("body")
+install.packages("RSelenium")
+library(rvest)
+library(tidyverse)
+library(purrr)
+library(rselenium)
+library(V8)
+library(rselenium)
+library(RSelenium)
+?rsDriver
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "chrome",
+port = 4545L,
+verbose = FALSE)
+remDr <- rD[["client"]]
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "chrome",
+chromever = "96.0.4664.110")
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "internet explorer",
+port = 4545L,
+verbose = FALSE)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "internet explorer",
+port = 4546L,
+verbose = FALSE)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "firefox",
+port = 4546L,
+verbose = FALSE)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(browser = "firefox",
+verbose = FALSE)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver()
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver("firefox")
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver()
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(port = 4568)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(port = 4545)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(port = 4545L)
+# Use RSelenium to open up a browser on your computer which it will then use, and to
+#  which we can pass commands.
+rD <- rsDriver(port = 4548L)
+rd<- rsDriver()
+rd<- rsDriver(port = 4545L)
+rd<- rsDriver(port = 4547L)
+?rsDriver
+rd<- rsDriver(port = 4547L, chromever = 96.0.4664.45)
+rd<- rsDriver(port = 4547L, chromever = "96.0.4664.45")
+rd<- rsDriver(port = 4548L, chromever = "96.0.4664.45")
+rd<- rsDriver(port = 4549L, chromever = "96.0.4664.45")
+remDr <- rD[["client"]]
+remDr$navigate(""https://www.fcc.gov/media/engineering/dtvmaps"")
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$navigate("fcc.gov/media/engineering/dtvmaps")
+remDr$navigate("https://adfg.alaska.gov")
+remDr$open("https://adfg.alaska.gov")
+remDr$open()
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$open("https://www.fcc.gov/media/engineering/dtvmaps")
+rsDriver()
+?rsDriver()
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr <- rD$client
+remDr$navigate("https://www.fcc.gov/media/engineering/dtvmaps")
+remDr$navigate(https://www.fcc.gov/media/engineering/dtvmaps)
+remDr$navigate('https://www.fcc.gov/media/engineering/dtvmaps')
+remDr$open
+remDr$navigate('https://www.fcc.gov/media/engineering/dtvmaps')
+rd<- rsDriver(port = 4549L, chromever = "latest")
+rd<- rsDriver(port = 4550L, chromever = "latest")
+rd<- rsDriver(port = 4549L, chromever = "96.0.4664.45")
+rd<- rsDriver(port = 4560L, chromever = "96.0.4664.45")
+remDr <- rD$client
+remDr$navigate('https://www.fcc.gov/media/engineering/dtvmaps')
+remDr$navigate('https://www.fcc.gov/media/engineering/dtvmaps.html')
+remDr$navigate(https://stackoverflow.com/questions/43930906/rselenium-issue)
+remDr$navigate('https://stackoverflow.com/questions/43930906/rselenium-issue')
+remDr$navigate()
+remDr$navigate(list("https://stackoverflow.com/questions/43930906/rselenium-issue"))

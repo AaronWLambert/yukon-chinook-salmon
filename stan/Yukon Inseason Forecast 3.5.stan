@@ -1,14 +1,14 @@
-// Yukon King Inseason Forecast Version 4.0
-//Notes: CDF version
-//       Average across days GSI proportions with logit transformation
-//       and beta liklihood for propCAN
+// Yukon King Inseason Forecast Version 3.1
+//Notes: log(EOS)~cumPSS
+//       Mean GSI across mean strata 
+//       and beta liklihood for propCAN with reparamaterized for mean and sd
 
 
 //Components:
 //  1) Pre-season forecast  (Prior)
 //  2) PSS current counts
 //  3) Regression for EOS Canadian
-//
+//  4) GSI adjustment
 //  
 
 
@@ -41,26 +41,18 @@ data {
   real<lower=0> curr_PSS[n_curr_PSS];
   
   // GSI proportions
-  real <lower=0> meanpropCAN[n_dayPSS];
-  real <lower=0> sd_meanpropCAN[n_dayPSS];
-  
-  // Data for CDF
-  matrix <lower=0> [n_dayPSS, n_yearPSS]PSS_cum_hist_mat;
-  real <lower=0> cum_curr_PSS[n_dayPSS];
+  real <lower=0> GSI_mean[n_dayPSS];
+  real <lower=0> GSI_sd[n_dayPSS];
   
 }
 
 // 
 parameters {
    
-  // // Regression Parameters
-  // real <lower=0> alpha;
-  // real <lower=0> beta;
+  // Regression Parameters
+  real <lower=0> alpha;
+  real <lower=0> beta;
   real <lower=0> sigma;
-  
-  // CDF parameters
-  real midPoint;
-  real shape;
   
   // GSI parameters
   real <lower=0> phi;
@@ -79,12 +71,10 @@ parameters {
 transformed parameters{
   
    //Empty vector for cum sum of counts for each year to myyear -1
-  matrix [n_dayPSS, n_yearPSS]cumHistPSS;
-  
-  matrix [n_dayPSS, n_yearPSS]cummulative_histPSS;
+  real cumHistPSS[n_yearPSS];
   
   // Empty vector for predicted PSS counts in transformed parameters
-  matrix [n_yearPSS, n_yearPSS]predPSS;
+  real ln_predPSS[n_yearPSS];
   
   // Predicted Runsize
   real RunSize;
@@ -92,29 +82,23 @@ transformed parameters{
   // Cummualative PSS for the year of interest
   real cum_current_PSS;
   
-  // current prediction for PSS
-  real curr_predPSS;
+  // log current prediction for PSS
+  real ln_curr_predPSS;
   
   // Parameters for GSI beta likelihood
   real paramA[n_dayPSS];
   
   real paramB[n_dayPSS];
   
-  real delta[n_dayPSS];
-  
-  matrix[n_dayPSS, n_yearPSS]changeDelta;
-  
   // // First days proportion
   // real propCAN_logit[n_dayPSS];
   vector<lower=0, upper=1> [n_dayPSS]propCAN;
-  
-  // real <lower=0> cumCurrentPSS[n_dayPSS];
    
    //  // Calculate the A an B parameter for beta dist
 for(x in 1:n_dayPSS){
- paramA[x] = ((1-meanpropCAN[x])/(sd_meanpropCAN[x]^2)-(1/meanpropCAN[x]))*meanpropCAN[x]^2;
+ paramA[x] = ((1-GSI_mean[x])/(GSI_sd[x]^2)-(1/GSI_mean[x]))*GSI_mean[x]^2;
 
- paramB[x] = paramA[x] * ((1/meanpropCAN[x])-1);}
+ paramB[x] = paramA[x] * ((1/GSI_mean[x])-1);}
  
  
  //  Bring propCAN_logit into beta space
@@ -124,43 +108,19 @@ for(t in 1:n_dayPSS){
  
   // Loop to get cumulative counts
  for (i in 1:n_yearPSS){
+   cumHistPSS[i] = 0;
+   
    for(j in 1:n_dayPSS){
-     cumHistPSS[j,i] = 0;
-   cumHistPSS[j,i] += (PSS_mat[j,i] * propCAN[j]);
+   cumHistPSS[i] += (PSS_mat[j,i] * propCAN[j]);
  }
  }
- for(y in 1:n_yearPSS){
- cummulative_histPSS[,y] = cumulative_sum(cumHistPSS[,y]);}
  
- //
+ //  Calculate predPSS from aplha, beta and cumHistPSS for model section
+ for (i in 1:n_yearPSS){
+ ln_predPSS[i] = alpha + beta * cumHistPSS[i];}
  
- 
-   for(d in 1:n_dayPSS){
- delta[d] = 1/(1+exp(-(dayPSS[d] - midPoint)/shape));}
- 
- for(i in 1: n_yearPSS){
- changeDelta[1,i] = 0;}
- 
- for(y in 2:n_yearPSS){
-   for(d in 2:n_dayPSS)
- changeDelta[d,y] = delta[d]-delta[d-1];}
- //
-
- 
- for(y in 1:n_yearPSS){
-   for(d in 1:n_dayPSS){
- 
- 
- predPSS[d,y] = PSS_cum_hist_mat[d,y]/delta[d];}}
- 
- 
- 
- // //  Calculate predPSS from aplha, beta and cumHistPSS for model section
- // for (i in 1:n_yearPSS){
- // ln_predPSS[i] = alpha + beta * cumHistPSS[i];}
- 
- // // Bring it back to reality
- // RunSize = exp(ln_RunSize);
+ // Bring it back to reality
+ RunSize = exp(ln_RunSize);
  
  // Sum curr_PSS after ajusting by propCAN
  
@@ -169,11 +129,8 @@ for(t in 1:n_dayPSS){
  cum_current_PSS += (curr_PSS[j]*propCAN[j]);
  }
  //
-
+ ln_curr_predPSS = alpha + beta * cum_current_PSS;
  
- // ln_curr_predPSS = alpha + beta * cum_current_PSS;
- 
-  curr_predPSS = cum_current_PSS/delta[n_dayPSS];
 
 
   // print("ln_predPSS: ",ln_predPSS[]);
@@ -191,10 +148,8 @@ for(t in 1:n_dayPSS){
 
 model {
   //prior
-  // alpha ~ normal(0,1e6);
-  // beta ~ normal(0,10);
-  midPoint ~ normal(28,2);
-  shape ~ normal(5,2);
+  alpha ~ normal(0,1e6);
+  beta ~ normal(0,10);
   sigma ~ normal(0,5);
   phi ~ normal(0,1);
   propCAN_logit[1] ~ normal(0,1);
@@ -213,22 +168,15 @@ model {
   // Preseason Forcast
   ln_RunSize ~ normal(Pf, Pf_sigma);
   
-  // //Likelihood Function
-  // for(i in 1:n_yearPSS){
-  //   // log(totalEOS[i]) ~ normal(log(predPSS), sigma);
-  //   // target += normal_lpdf(totalEOS|predPSS,sigma);
-  //   // totalEOS[i]~normal(predPSS[i], sigma);
-  //   // Change here
-  //   log(totalEOS[i])~normal((predPSS[i]),sigma);
-  //   // log(totalEOS[i])~normal(log(predPSS[i]),sigma);
-  // }
-  
-  // CDF Likelihood
-  for(y in 1:n_yearPSS){
-    for(d in 1:n_dayPSS){
-  
-    log(cumHistPSS[d,y])~normal(log(changeDelta[d,y]*predPSS[d,y]),sigma);}}
-  
+  //Likelihood Function
+  for(i in 1:n_yearPSS){
+    // log(totalEOS[i]) ~ normal(log(predPSS), sigma);
+    // target += normal_lpdf(totalEOS|predPSS,sigma);
+    // totalEOS[i]~normal(predPSS[i], sigma);
+    // Change here
+    log(totalEOS[i])~normal((ln_predPSS[i]),sigma);
+    // log(totalEOS[i])~normal(log(predPSS[i]),sigma);
+  }
   
 
   //Canadian Proportion likelihood
@@ -238,40 +186,36 @@ model {
   // target += beta_lpdf(propCAN|paramA, paramB);
   
   // Update for the posterior
-  target += normal_lpdf(ln_RunSize | curr_predPSS,sigma);
+  target += normal_lpdf(ln_RunSize | ln_curr_predPSS,sigma);
 
 }
 
-// generated quantities{
-//   //
-//   real ln_prior_pf;
-//   
-//   real prior_pf;
-//   // 
-//   matrix [n_dayPSS,n_yearPSS]predPSS;
-//   //
-//   real curr_predPSS;
-//   
-//   real ln_post_curr_predPSS;
-//   
-//   real post_curr_predPSS;
-//   
-//   ln_prior_pf = normal_rng(Pf,Pf_sigma);
-//   
-//   prior_pf = exp(ln_prior_pf);
-//   //
-//   predPSS = exp(ln_predPSS);
-//   //
-//   curr_predPSS = exp(ln_curr_predPSS);
-//   
-//   ln_post_curr_predPSS = normal_rng(ln_curr_predPSS, sigma);
-//   
-//   post_curr_predPSS = exp(ln_post_curr_predPSS);
-// }
-
-
-
-
+generated quantities{
+  //
+  real ln_prior_pf;
+  
+  real prior_pf;
+  // 
+  real predPSS[n_yearPSS];
+  //
+  real curr_predPSS;
+  
+  real ln_post_curr_predPSS;
+  
+  real post_curr_predPSS;
+  
+  ln_prior_pf = normal_rng(Pf,Pf_sigma);
+  
+  prior_pf = exp(ln_prior_pf);
+  //
+  predPSS = exp(ln_predPSS);
+  //
+  curr_predPSS = exp(ln_curr_predPSS);
+  
+  ln_post_curr_predPSS = normal_rng(ln_curr_predPSS, sigma);
+  
+  post_curr_predPSS = exp(ln_post_curr_predPSS);
+}
 
 
 

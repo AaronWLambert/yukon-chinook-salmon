@@ -1,7 +1,7 @@
-// Yukon King Inseason Forecast Version 3.3
+// Yukon King Inseason Forecast Version 3.4
 //Notes: log(EOS)~cumPSS
-//       Average across days GSI proportions with logit transformation
-//       canProp normal likelihood canProp ~ normal(meanpropCAN, sd_meanpropCAN)
+//       GSI likelihood is from mean GSI across mean strata dates
+//       canProp normal likelihood canProp ~ normal(GSI_avg, GSI_sd)
 
 
 //Components:
@@ -41,8 +41,8 @@ data {
   real<lower=0> curr_PSS[n_curr_PSS];
   
   // GSI proportions
-  real <lower=0> meanpropCAN[n_dayPSS];
-  real <lower=0> sd_meanpropCAN[n_dayPSS];
+  real <lower=0> GSI_mean[n_dayPSS];
+  real <lower=0> GSI_sd[n_dayPSS];
   
 }
 
@@ -170,7 +170,7 @@ model {
   //Canadian Proportion likelihood
   // propCAN ~ beta(((1 - meanpropCAN)/(sd_meanpropCAN) - (1/meanpropCAN)) * meanpropCAN^2, ((1/meanpropCAN)-1));
   for(i in 1:n_dayPSS){
-  propCAN[i] ~ normal(meanpropCAN[i], sd_meanpropCAN[i]);}
+  propCAN[i] ~ normal(GSI_mean[i], GSI_sd[i]);}
   
   // target += beta_lpdf(propCAN | paramA, paramB);
   // Update for the posterior
@@ -204,8 +204,6 @@ generated quantities{
   
   post_curr_predPSS = exp(ln_post_curr_predPSS);
 }
-
-
 
 
 

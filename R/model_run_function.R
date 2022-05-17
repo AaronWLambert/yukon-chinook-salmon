@@ -163,6 +163,36 @@ InSeasonProjection <- function(model.version,
     counter <- counter+1
   }
   
+  # Mean GSI by mean strata dates. This is used in versions 3.4 and up #############################
+  meanStartDay <-GSI_by_year %>% group_by(stratum) %>% 
+    summarise("meanStartDay" = mean(startday)) %>% 
+    as.data.frame()
+  
+  GSI_mean_by_strata <-GSI_by_year %>% 
+    summarize("stratumMean" = c(mean(propCan[stratum == 1]),
+                                mean(propCan[stratum == 2]),
+                                mean(propCan[stratum == 3 | stratum == 4])),
+              "stratumSD" = c(sd(propCan[stratum == 1]),
+                              sd(propCan[stratum == 2]),
+                              sd(propCan[stratum == 3 | stratum == 4]))) %>%  as.data.frame()
+  
+  GSI <- cbind(GSI_mean_by_strata,round(meanStartDay[1:3,]))
+  
+  GSI_avg<-c(rep(GSI$stratumMean[GSI$stratum == 1], 
+                 times = length(startDayPSS:GSI$meanStartDay[GSI$stratum==2]-1)),
+             rep(GSI$stratumMean[GSI$stratum == 2], 
+                 times = length(GSI$meanStartDay[GSI$stratum==2]:GSI$meanStartDay[GSI$stratum == 3]-1)),
+             rep(GSI$stratumMean[GSI$stratum == 3],
+                 times = length(GSI$meanStartDay[GSI$stratum == 3]:max(PSS_hist$Day))))
+  GSI_avg_vect <- GSI_avg[1:length(startDayPSS:myDay)]
+  
+  GSI_sd <- c(rep(GSI$stratumSD[GSI$stratum == 1], 
+                  times = length(startDayPSS:GSI$meanStartDay[GSI$stratum==2]-1)),
+              rep(GSI$stratumSD[GSI$stratum == 2], 
+                  times = length(GSI$meanStartDay[GSI$stratum==2]:GSI$meanStartDay[GSI$stratum == 3]-1)),
+              rep(GSI$stratumSD[GSI$stratum == 3],
+                  times = length(GSI$meanStartDay[GSI$stratum == 3]:max(PSS_hist$Day))))
+  GSI_sd_vect <- GSI_sd[1:length(startDayPSS:myDay)]
   # Create matrix with dimensions myday and myYear
   PSS_mat_adj <- matrix(nrow = (length(startDayPSS:myDay )),
                         #start 1996 to account for missing year 1996
@@ -203,6 +233,7 @@ InSeasonProjection <- function(model.version,
     adj_curr_PSS[d] <- curr_PSS[d]*meanGSI_vect[d]
   }
   
+  
   # Stan Model Call ######################################
   
   
@@ -224,7 +255,9 @@ InSeasonProjection <- function(model.version,
                          "meanpropCAN" = meanGSI_vect,
                          "sd_meanpropCAN" = sdGSI_vect,
                          "mean_adj_PSS_mat"=PSS_mat_adj,
-                         "mean_adj_curr_PSS"= adj_curr_PSS),
+                         "mean_adj_curr_PSS"= adj_curr_PSS,
+                         "GSI_mean"= GSI_avg_vect,
+                         "GSI_sd" = GSI_sd_vect),
              chains = n.chains,
              iter = n.iter, 
              thin = n.thin, 

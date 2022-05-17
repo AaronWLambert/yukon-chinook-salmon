@@ -79,11 +79,14 @@ PSS_hist <- readRDS(file = file.path(dir.data,"pss adfg 27April22.RDS"))
 pf_hist <- readRDS(file.path(dir.data,"inv_var_weighted_forcast_v3_Jan282022.RDS"))
 
 # Read in genetic stock identification (2005-2019) 
-# (adjusted to capture early and late runs)
+# (adjusted to capture early and late runs) and days not covered by GSI
 # GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year"))
 GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year unadj 27April22.RDS"))
+
+
 # Control Section ######################
-model.version <- "4.0"
+# This is where the user can input dates, stan model, and stan model controls.
+model.version <- "1.0"
 # Range of years $$$$ to 2021
 myYear <- 2019
 
@@ -102,47 +105,64 @@ startYearPSS <-1997
 
 # Wont typicaly change;
 # day 152 = June 1
-startDayPSS <-152
+startDayPSS <- 152
 
 # Preseason Forecast######################
 
 # Current Preseason forecast Can Origin
 pf <- log(pf_hist$Weighted_Forecast[pf_hist$Year == myYear])
-# pf_sigma <- (0.6)
+
+# Vector of historical preseason forecasts for to compute sd for prior in stan model
 PF_vect <- pf_hist$Weighted_Forecast[pf_hist$Year<=2021]
+
+# EOS reconstructed runsize for historic years that have a preseason forecast 
 EOS <- CAN_hist$can.mean[CAN_hist$Year >= 2007 & 
                           CAN_hist$Year != 2011 & 
                           CAN_hist$Year != 2012]
 
+# SD for preseason forecast prior
 pf_sigma <- sd(log(PF_vect/EOS))
 
 
 
 # Metadata###############################
+# This section is for data pre-processing
 
-# PSS years used
+# Vector of historic PSS years up to myYear-1
 yearPSS <- unique(PSS_hist$Year[PSS_hist$Year<=(myYear-1)])
+# Number of years used in model
 n_yearPSS <- length(yearPSS)
 
-# PSS Days 
-dayPSS <- unique(PSS_hist$Day[PSS_hist$Day <=(myDay)])-151
+# PSS days included up to myDay. 151 is subtracted for use in logistic model
+#  I.e., June 1 = 1, June 2 = 2 ....
+dayPSS <- unique(PSS_hist$Day[PSS_hist$Day <=(myDay)])-147
+
+# Number of days used
 n_dayPSS <- length(dayPSS)
 
-# PSS Counts for myYear
+
+# PSS daily passage estimate for days up to myDay for the year of interest (myYear)
 curr_PSS <- (PSS_hist$count[PSS_hist$Year == myYear & PSS_hist$Day <= myDay])
+# Number of days used
 n_curr_PSS <- length(curr_PSS)
+
+# TAKE ME OUT#########################
 cum_curr_PSS <- cumsum(curr_PSS)
 # # Historical  Canadian Origin PF (2013 - current)
 # histPF <- pf_hist$Weighted_Forecast[pf_hist$Year <= (myYear-1)]
 # names(histPF) <- (pf_hist$Year[pf_hist$Year <= (myYear-1)]) 
 # n_histPF <-length(histPF)
 
-# End of season Canadian counts 1995-2020 excluding 1996 for comparison to PSS
+# End of season Canadian abundance estimates for 1995-2020 excluding 1996 (not included in data) 
+#  This is what cum PSS is regressed against in Stan Model and years up to myYear-1 are included
 totalEOS <- CAN_hist$can.mean[CAN_hist$Year <= (myYear-1) & CAN_hist$Year != 1996]
+
+# Name the elements for accounting purposes
 names(totalEOS) <- CAN_hist$Year[CAN_hist$Year <= (myYear-1)& CAN_hist$Year != 1996]
+#Number of 
 n_totalEOS <- length(totalEOS)
 
-# Create matrix with PSS daily counts from day 152 to my day and 1995
+# Create matrix with PSS daily Chinook passage from day 152 to my day and 1995
 # to my year
 #  *Note that 1996 is missing*
 
@@ -152,15 +172,11 @@ PSS_mat <- matrix(nrow = (length(startDayPSS:myDay )),
                   #start 1996 to account for missing year 1996
                   ncol = length(1996:(myYear-1))) 
 
-# Give names to matrix
+# Give names to matrix for accounting
 colnames(PSS_mat) <- c("1995", startYearPSS:(myYear-1))
 rownames(PSS_mat) <- c(startDayPSS:(myDay))
 
-# Make sure it works...
-dim(PSS_mat)
-
-
-# Create vector of counts from relevant years and days
+# Create vector of counts from relevant years and days to input into matrix
 (count_vect <- PSS_hist$count[PSS_hist$Year<= (myYear-1) &
                                 PSS_hist$Day <= (myDay)])
 
@@ -168,7 +184,6 @@ dim(PSS_mat)
 (n_hist_counts <- length(count_vect))
 
 # Use loop to populate matrix with counts by days
-
 # Set counter
 counter <-1
 
@@ -195,7 +210,7 @@ for (i in 1:n_yearPSS) {
   cumPSS[i]<- sum(PSS_mat[,i])
 }
 
-# Vector containing avg GSI proportions for each day across all years
+# Vector containing avg GSI proportions for each day ACROSS ALL YEARS (for versions 3.1,3.2,3.3) ####
 meanGSI_vect <- vector(length = length(152:myDay))
 names(meanGSI_vect) <- c(152:myDay)
 sdGSI_vect <- vector(length = length(152:myDay))
@@ -208,6 +223,37 @@ for (d in 152:myDay) {
   counter <- counter+1
 }
 
+# Mean GSI by mean strata dates. This is used in versions 3.4 and up #############################
+meanStartDay <-GSI_by_year %>% group_by(stratum) %>% 
+  summarise("meanStartDay" = mean(startday)) %>% 
+  as.data.frame()
+
+GSI_mean_by_strata <-GSI_by_year %>% 
+  summarize("stratumMean" = c(mean(propCan[stratum == 1]),
+                              mean(propCan[stratum == 2]),
+                              mean(propCan[stratum == 3 | stratum == 4])),
+            "stratumSD" = c(sd(propCan[stratum == 1]),
+                            sd(propCan[stratum == 2]),
+                            sd(propCan[stratum == 3 | stratum == 4]))) %>%  as.data.frame()
+
+GSI <- cbind(GSI_mean_by_strata,round(meanStartDay[1:3,]))
+
+GSI_avg<-c(rep(GSI$stratumMean[GSI$stratum == 1], 
+               times = length(startDayPSS:GSI$meanStartDay[GSI$stratum==2]-1)),
+           rep(GSI$stratumMean[GSI$stratum == 2], 
+               times = length(GSI$meanStartDay[GSI$stratum==2]:GSI$meanStartDay[GSI$stratum == 3]-1)),
+           rep(GSI$stratumMean[GSI$stratum == 3],
+               times = length(GSI$meanStartDay[GSI$stratum == 3]:max(PSS_hist$Day))))
+GSI_avg_vect <- GSI_avg[1:length(startDayPSS:myDay)]
+
+GSI_sd <- c(rep(GSI$stratumSD[GSI$stratum == 1], 
+                times = length(startDayPSS:GSI$meanStartDay[GSI$stratum==2]-1)),
+            rep(GSI$stratumSD[GSI$stratum == 2], 
+                times = length(GSI$meanStartDay[GSI$stratum==2]:GSI$meanStartDay[GSI$stratum == 3]-1)),
+            rep(GSI$stratumSD[GSI$stratum == 3],
+                times = length(GSI$meanStartDay[GSI$stratum == 3]:max(PSS_hist$Day))))
+GSI_sd_vect <- GSI_sd[1:length(startDayPSS:myDay)]
+
 # Create matrix with dimensions myday and myYear
 PSS_mat_adj <- matrix(nrow = (length(startDayPSS:myDay )),
                       #start 1996 to account for missing year 1996
@@ -216,9 +262,6 @@ PSS_mat_adj <- matrix(nrow = (length(startDayPSS:myDay )),
 # Give names to matrix
 colnames(PSS_mat_adj) <- c("1995", startYearPSS:(myYear-1))
 rownames(PSS_mat_adj) <- c(startDayPSS:(myDay))
-
-# Make sure it works...
-dim(PSS_mat_adj)
 
 
 for (y in 1:n_yearPSS) {
@@ -261,8 +304,6 @@ adj_curr_PSS[d] <- curr_PSS[d]*meanGSI_vect[d]
 fit <- stan(file = file.path(dir.stan,paste("Yukon Inseason Forecast ",
                                             model.version ,".stan", sep = "")),
             data = list("PSS_mat"=PSS_mat,
-                        # "n_histPF" =n_histPF, 
-                        # "histPF"=histPF,
                         "n_totalEOS"=n_totalEOS,
                         "totalEOS"=totalEOS, 
                         "n_dayPSS"=n_dayPSS,
@@ -279,15 +320,17 @@ fit <- stan(file = file.path(dir.stan,paste("Yukon Inseason Forecast ",
                         "mean_adj_PSS_mat" = PSS_mat_adj,
                         "mean_adj_curr_PSS"= adj_curr_PSS,
                         "PSS_cum_hist_mat" = PSS_cum_hist_mat,
-                        "cum_curr_PSS" = cum_curr_PSS),
+                        "cum_curr_PSS" = cum_curr_PSS,
+                        "GSI_mean"= GSI_avg_vect,
+                        "GSI_sd" = GSI_sd_vect),
             # init = inits,
-            chains = 1,
+            chains = n.chains,
             iter = n.iter, 
             thin = n.thin, 
             # cores = n.chains,
             cores = mc.cores,
             control = list(max_treedepth = 25, adapt_delta = 0.99),
-            verbose = T
+            verbose = F
               
             )
 
@@ -400,9 +443,9 @@ ggplot(longDF, aes(x = variable, y = value) )+
   labs(x = "Day of Year", y = "Estimated Canadian Proportion")
 
 
-hist(rbeta(n = 1000,pars$paramA[1,33], pars$paramB[1,33]))
+hist(rbeta(n = 1000,pars$paramA[1,2], pars$paramB[1,2]))
 
-
+pars$
 #################################################################################
 # Create matrix with dimensions myday and myYear
 PSS_mat_adj <- matrix(nrow = (length(startDayPSS:myDay )),

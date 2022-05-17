@@ -79,7 +79,7 @@ pf_hist <- readRDS(file.path(dir.data,"inv_var_weighted_forcast_v3_Jan282022.RDS
 # GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year"))
 GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year unadj 27April22.RDS"))
 # Control Section ######################
-model.version <- "3.3"
+model.version <- "3.5"
 # Range of years $$$$ to 2021
 # myYear <- 2019
 
@@ -99,8 +99,8 @@ testYears <- c(2007:2010,2013:2021)
 # Run the model for a single year and day of interest.
 #  Asjust the inputs for the model in the control section above
 # model.output <-InSeasonProjection(model.version = model.version,
-#                                   myYear = 2013,
-#                                   myDay = 165,
+#                                   myYear = 2015,
+#                                   myDay = 220,
 #                                   n.chains = n.chains,
 #                                   n.iter = n.iter,
 #                                   n.thin = n.thin,
@@ -137,7 +137,7 @@ outputList$`2007_153`$pars
 # Save or read in outputlist #######################################
 
 # Save output
-# saveRDS(object = outputList, file = file.path(dir.output, "OutPut_ver21_oldCan_2007_2010_2013_2021_3.3.RDS"))
+saveRDS(object = outputList, file = file.path(dir.output, "OutPut_ver21_oldCan_2007_2010_2013_2021_3.5.RDS"))
 # outputlist_ver1 <- readRDS(file = file.path(dir.output,"OutPut_ver1_23mar22.RDS"))
 # outputlist_ver2 <- readRDS(file = file.path(dir.output,"OutPut_ver2_23mar22.RDS"))
 outputlist_ver1_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver1_oldCan_2007_2010_2013_2021_5apr22.RDS"))
@@ -147,6 +147,8 @@ outputlist_ver2.2_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver2
 outputlist_ver3.0_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver30_oldCan_2007_2010_2013_2021_9may21.RDS"))
 outputlist_ver3.2_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver32_oldCan_2007_2010_2013_2021_9may21.RDS"))
 outputlist_ver3.3_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver33_oldCan_2007_2010_2013_2021_9may21.RDS"))
+outputlist_ver3.4_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver21_oldCan_2007_2010_2013_2021_3.4.RDS"))
+outputlist_ver3.5_oldCanHist <- readRDS(file = file.path(dir.output,"OutPut_ver21_oldCan_2007_2010_2013_2021_3.5.RDS"))
 ##### Calculations for retrospecitve testing #############################################
 
 RetroList_ver1 <- retrospective.function(outputList = outputlist_ver1_oldCanHist,
@@ -186,6 +188,16 @@ RetroList_ver3.3 <- retrospective.function(outputList = outputlist_ver3.3_oldCan
                                            testDays = testDays,
                                            CAN_hist = CAN_hist,
                                            pf = FALSE)
+RetroList_ver3.4 <- retrospective.function(outputList = outputlist_ver3.4_oldCanHist,
+                                           testYears = testYears,
+                                           testDays = testDays,
+                                           CAN_hist = CAN_hist,
+                                           pf = FALSE)
+RetroList_ver3.5 <- retrospective.function(outputList = outputlist_ver3.5_oldCanHist,
+                                           testYears = testYears,
+                                           testDays = testDays,
+                                           CAN_hist = CAN_hist,
+                                           pf = FALSE)
 
 RetroList_pf <- retrospective.function(outputList = outputlist_ver2.1_oldCanHist,
                                             testYears = testYears,
@@ -218,6 +230,13 @@ rmseDF_ver3.2 <- data.frame("Day" = testDays,
 rmseDF_ver3.3 <- data.frame("Day" = testDays, 
                             "RMSE" = RetroList_ver3.3$RMSE_by_day_vect,
                             "Version" = "ver3.3")
+rmseDF_ver3.4 <- data.frame("Day" = testDays, 
+                            "RMSE" = RetroList_ver3.4$RMSE_by_day_vect,
+                            "Version" = "ver3.4")
+rmseDF_ver3.5 <- data.frame("Day" = testDays, 
+                            "RMSE" = RetroList_ver3.5$RMSE_by_day_vect,
+                            "Version" = "ver3.5")
+
 rmseDF_pf <- data.frame("Day" = testDays,
                              "RMSE" = RetroList_pf$RMSE_by_day_vect,
                              "Version" = "pf")
@@ -229,6 +248,8 @@ full_rmseDF <- rbind(rmseDF_ver1,
                      rmseDF_ver3.0,
                      rmseDF_ver3.2,
                      rmseDF_ver3.3,
+                     rmseDF_ver3.4,
+                     rmseDF_ver3.5,
                      rmseDF_pf)
 
 full_rmseDF$Version <- as.factor(full_rmseDF$Version)
@@ -323,6 +344,12 @@ mapeDF_ver3.2 <- data.frame("Day" = testDays,
 mapeDF_ver3.3 <- data.frame("Day" = testDays, 
                             "MAPE" = RetroList_ver3.3$MAPE_vect,
                             "Version" = "Ver 3.3")
+mapeDF_ver3.4 <- data.frame("Day" = testDays, 
+                            "MAPE" = RetroList_ver3.4$MAPE_vect,
+                            "Version" = "Ver 3.4")
+mapeDF_ver3.5 <- data.frame("Day" = testDays, 
+                            "MAPE" = RetroList_ver3.5$MAPE_vect,
+                            "Version" = "Ver 3.5")
 mapeDF_PF <- data.frame("Day" = testDays, 
                              "MAPE" = RetroList_pf$MAPE_vect,
                              "Version" = "PF")
@@ -334,6 +361,8 @@ full_MAPE.df <- rbind(mapeDF_ver1,
                       mapeDF_ver3.0,
                       mapeDF_ver3.2,
                       mapeDF_ver3.3,
+                      mapeDF_ver3.4,
+                      mapeDF_ver3.5,
                       mapeDF_PF)
 
 ggplot(full_MAPE.df, aes(x = Day, y = MAPE*100, fill = Version))+
@@ -390,6 +419,16 @@ PE_ver3.3 <- as.data.frame(RetroList_ver3.3$PE_mat) %>%
   as.data.frame()
 PE_ver3.3$version <- "Ver 3.3"
 
+PE_ver3.4 <- as.data.frame(RetroList_ver3.4$PE_mat) %>% 
+  pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
+  as.data.frame()
+PE_ver3.4$version <- "Ver 3.4"
+
+PE_ver3.5 <- as.data.frame(RetroList_ver3.5$PE_mat) %>% 
+  pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
+  as.data.frame()
+PE_ver3.5$version <- "Ver 3.5"
+
 PE_pf <- as.data.frame(RetroList_pf$PE_mat) %>% 
   pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
   as.data.frame()
@@ -402,6 +441,8 @@ peDF_total <- rbind(PE_ver1,
                     PE_ver3.0,
                     PE_ver3.2,
                     PE_ver3.3,
+                    PE_ver3.4,
+                    PE_ver3.5,
                     PE_pf)
 
 
@@ -410,7 +451,7 @@ ggplot(peDF_total, aes(x = Year, y = PE, fill = version))+
   geom_boxplot() + 
   geom_hline(yintercept  = 0, linetype = 2)+
   labs(fill = "")+
-  scale_fill_colorblind()+
+  # scale_fill_colorblind()+
   theme(legend.position = "top",
         panel.grid.major.y  =element_line(linetype = 2, size = .5, color = "white"),
         panel.grid.major.x = element_blank(),
@@ -422,33 +463,33 @@ ggplot(peDF_total, aes(x = Year, y = PE, fill = version))+
 
 
 ##### Density Plots with plot function #####################################################
-
+outPlots(outputList = model.output ,CAN_hist = CAN_hist,GSI = TRUE)
 # List to hold plots
-plots_old_can_ver3.2 <- list()
+plots_old_can_ver3.5 <- list()
 for (i in 1:length(outputlist_ver3.2_oldCanHist)) {
   
 
-plots_old_can_ver3.2[[i]] <- outPlots(outputList = outputlist_ver3.2_oldCanHist[[i]],
+plots_old_can_ver3.5[[i]] <- outPlots(outputList = outputlist_ver3.5_oldCanHist[[i]],
                                    CAN_hist = CAN_hist,GSI = TRUE)
 }
 
-plots_old_can_ver3.2[[65]]$PredPlot # Vector of names form plot list
-test<-names(outputlist_ver3.2_oldCanHist)
+plots_old_can_ver3.5[[65]]$PredPlot # Vector of names form plot list
+test<-names(outputlist_ver3.5_oldCanHist)
 
 
-names(plots_old_can_ver3.2)<-test
-plots_old_can_ver3.2$`2008_153`$DensPlot
+names(plots_old_can_ver3.5)<-test
+plots_old_can_ver3.5$`2018_188`$DensPlot
 
 
-figure<-ggarrange(plots_old_can_ver3.2$`2021_153`$DensPlot,
-                  plots_old_can_ver3.2$`2021_178`$DensPlot,
-                  plots_old_can_ver3.2$`2021_198`$DensPlot,
-                  plots_old_can_ver3.2$`2019_153`$DensPlot,
-                  plots_old_can_ver3.2$`2019_178`$DensPlot,
-                  plots_old_can_ver3.2$`2019_198`$DensPlot,
-                  plots_old_can_ver3.2$`2017_153`$DensPlot,
-                  plots_old_can_ver3.2$`2017_178`$DensPlot,
-                  plots_old_can_ver3.2$`2017_198`$DensPlot,
+figure<-ggarrange(plots_old_can_ver3.5$`2021_153`$DensPlot,
+                  plots_old_can_ver3.5$`2021_178`$DensPlot,
+                  plots_old_can_ver3.5$`2021_198`$DensPlot,
+                  plots_old_can_ver3.5$`2019_153`$DensPlot,
+                  plots_old_can_ver3.5$`2019_178`$DensPlot,
+                  plots_old_can_ver3.5$`2019_198`$DensPlot,
+                  plots_old_can_ver3.5$`2017_153`$DensPlot,
+                  plots_old_can_ver3.5$`2017_178`$DensPlot,
+                  plots_old_can_ver3.5$`2017_198`$DensPlot,
                   ncol = 3, 
                   nrow = 3, 
                   common.legend = TRUE,

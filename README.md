@@ -1,7 +1,7 @@
 # yukon-chinook-salmon
 ## Bayesian Inseason Projection For Canadian-origin Yukon Chinook Salmon 
 ## Purpose
-A management tool created to generate an inseason projection for each day during the summer Chinook salmon run on the Yukon River to estimate the end-of-season escapement of Canadian-origin Chinook salmon into Canda. This method utilizes a Bayesian updating approach using Rstan in R. Users can generate projections retrospectively for model testing and selecting purposes or to generate inseason projections for the current year.
+A management tool created to generate an inseason projection for each day during the summer Chinook salmon run on the Yukon River to estimate the end-of-season escapement of Canadian-origin Chinook salmon into Canda. This method utilizes a Bayesian updating approach using Rstan in R. Users can generate projections retrospectively for model testing and selection purposes or to generate inseason projections for the current year.
 ## Folders
 |File|Description|
 |---|---|

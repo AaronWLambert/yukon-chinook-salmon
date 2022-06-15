@@ -14,3 +14,5 @@ output/
 # Ignore .DS_Store
 .DS_Store
 
+# Figures folder
+/figs

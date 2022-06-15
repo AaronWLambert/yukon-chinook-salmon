@@ -1,2 +1,18 @@
 output/
 .Rproj.user
+
+# History files
+.Rhistory
+.Rapp.history
+
+# User-specific files
+.Ruserdata
+
+# RStudio files
+.Rproj.user/
+
+# Ignore .DS_Store
+.DS_Store
+
+# Figures folder
+/figs

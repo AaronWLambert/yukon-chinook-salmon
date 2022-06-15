@@ -65,18 +65,19 @@ dir.R <- file.path(wd,"R")
 # This is the reconstructed data from Curry for old reconstructed modeling procedure
 CAN_hist <- readRDS(file.path(dir.data,"Can Origin Reconstructed 2Feb22.RDS"))
 
-# PSS historical for Jun 1st = 1, to Aug 31 = 92
+# PSS historical for Jun 1st = 152, to Aug 31 = 243
 # Data obtained from ADFG website
 # https://www.adfg.alaska.gov/index.cfm?adfg=commercialbyareayukon.salmon_escapement
-# NOTE!!!! Use melt function to get into this form !!!!!!!
-PSS_hist <- readRDS(file = file.path(dir.data,"pss adfg 27April22.RDS"))
+# NOTE!!!! See use "Dataframe preprocess.R" to get  most recent version.
+#  If not using Dataframe preprocess.R, uncomment out the following to load relevant PSS historical data
+# PSS_hist <- readRDS(file = file.path(dir.data,"pss adfg 27April22.RDS"))
 
 # Read in historical avg of GSI by strata (Naive estimator)
 # GSI_mean<-readRDS(file = file.path(dir.data,"Mean GSI by strata 2005-2020.RDS"))
 
 # Read in historic preseason forecasts (2013 - 2021)
 # pf_hist <- readRDS(file.path(dir.data,"preseason forcast.RDS"))
-pf_hist <- readRDS(file.path(dir.data,"inv_var_weighted_forcast_v3_Jan282022.RDS"))
+pf_hist <- readRDS(file.path(dir.data,"inv_var_weighted_forcast_v3_June072022.RDS"))
 
 # Read in genetic stock identification (2005-2019) 
 # (adjusted to capture early and late runs) and days not covered by GSI
@@ -87,11 +88,11 @@ GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year unadj 27April22.RD
 # Control Section ######################
 # This is where the user can input dates, stan model, and stan model controls.
 model.version <- "1.0"
-# Range of years $$$$ to 2021
-myYear <- 2019
+# Range of years 1995 to 2021
+myYear <- 2022
 
 # Range of days 152 -243
-myDay <- 200
+myDay <- 158
 
 # MCMC Parameters
 n.chains <- 4
@@ -105,7 +106,7 @@ startYearPSS <-1997
 
 # Wont typicaly change;
 # day 152 = June 1
-startDayPSS <- 152
+startDayPSS <- 148
 
 # Preseason Forecast######################
 
@@ -133,8 +134,8 @@ yearPSS <- unique(PSS_hist$Year[PSS_hist$Year<=(myYear-1)])
 # Number of years used in model
 n_yearPSS <- length(yearPSS)
 
-# PSS days included up to myDay. 151 is subtracted for use in logistic model
-#  I.e., June 1 = 1, June 2 = 2 ....
+# # PSS days included up to myDay. 151 is subtracted for use in logistic model
+# #  I.e., June 1 = 1, June 2 = 2 ....
 dayPSS <- unique(PSS_hist$Day[PSS_hist$Day <=(myDay)])-147
 
 # Number of days used
@@ -146,7 +147,7 @@ curr_PSS <- (PSS_hist$count[PSS_hist$Year == myYear & PSS_hist$Day <= myDay])
 # Number of days used
 n_curr_PSS <- length(curr_PSS)
 
-# TAKE ME OUT#########################
+# TAKE ME OUT##
 cum_curr_PSS <- cumsum(curr_PSS)
 # # Historical  Canadian Origin PF (2013 - current)
 # histPF <- pf_hist$Weighted_Forecast[pf_hist$Year <= (myYear-1)]
@@ -218,6 +219,7 @@ names(sdGSI_vect) <- c(152:myDay)
 
 counter <- 1
 for (d in 152:myDay) {
+  d = 175
   meanGSI_vect[counter]<- mean(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
   sdGSI_vect[counter]<- sd(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
   counter <- counter+1
@@ -285,11 +287,11 @@ for (i in 1:n_yearPSS) {
 }
 
 adj_curr_PSS <- vector(length = n_dayPSS)
-for (d in 1:n_dayPSS) {
-  
-
-adj_curr_PSS[d] <- curr_PSS[d]*meanGSI_vect[d]
-}
+# for (d in 1:n_dayPSS) {
+#   
+# 
+# adj_curr_PSS[d] <- curr_PSS[d]*meanGSI_vect[d]
+# }
 # Stan Model Call ######################################
 
 
@@ -397,10 +399,10 @@ ggplot(df.comb, aes(x = value/1000, fill = par))+
   geom_density(alpha = .5)+
   ggtitle(paste("Density plot for",myYear,", day",myDay,"\n Version", model.version))+
   # theme_classic()+
-  geom_vline(aes(xintercept = CAN_hist$can.mean[CAN_hist$Year == myYear]/1000,
-             color = "End of Season Runsize"),
-             linetype = 2,
-             size = 1)+
+  # geom_vline(aes(xintercept = CAN_hist$can.mean[CAN_hist$Year == myYear]/1000,
+  #            color = "End of Season Runsize"),
+  #            linetype = 2,
+  #            size = 1)+
   # xlim(c(0,300000))+
   coord_cartesian(xlim = c(0,250))+
   # ylim(c(0,500))

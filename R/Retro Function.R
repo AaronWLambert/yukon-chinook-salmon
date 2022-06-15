@@ -3,7 +3,7 @@
 # Creator: Aaron Lambert, College of Fisheries and Ocean Sciences, UAF
 # Date: 03.14.22
 # Version: This function will run any version of the Yukon Inseason Forecast model outputlist
-# Purpose: Functions that will calculate retrospective testing procedures
+# Purpose: Functions that will calculate retrospective testing stats
 # 
 #
 #

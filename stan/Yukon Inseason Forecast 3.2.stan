@@ -59,7 +59,7 @@ parameters {
   // real <lower=0, upper=1> propCAN_1;
   // real<lower=0, upper=1> propCAN[n_dayPSS];
   
-    // First days proportion
+    // Logit canadian proportions
   real propCAN_logit[n_dayPSS];
   
   

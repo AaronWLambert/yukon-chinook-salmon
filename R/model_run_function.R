@@ -34,7 +34,8 @@ InSeasonProjection <- function(model.version,
                                CAN_hist,
                                PSS_hist,
                                GSI_by_year,
-                               pf_hist){
+                               pf_hist,
+                               savefit = FALSE){
   # Control Section ######################
   # model.version <- version
   # Range of years $$$$ to 2021
@@ -55,7 +56,7 @@ InSeasonProjection <- function(model.version,
   
   # Wont typicaly change;
   # day 152 = June 1
-  startDayPSS <-152
+  startDayPSS <-148
   # Preseason Forcast######################
   
   # Current Preseason forecast Can Origin
@@ -272,7 +273,7 @@ InSeasonProjection <- function(model.version,
   
   # Extract fit summary for saving
   fit.summary <- summary(fit)
-  
+  if(savefit == FALSE){
   outs <- list("cumPSS" = cumPSS, 
                "cumPSS_adj"= cumPSS_adj,
                "pars" = pars, 
@@ -282,11 +283,23 @@ InSeasonProjection <- function(model.version,
                "myYear" = myYear,
                "version" = model.version,
                "myDay" = myDay)
+  }else{
+    outs <- list("cumPSS" = cumPSS, 
+                 "cumPSS_adj"= cumPSS_adj,
+                 "pars" = pars, 
+                 "totalEOS" = totalEOS, 
+                 # "fit" = fit, 
+                 "summary" = fit.summary,
+                 "myYear" = myYear,
+                 "version" = model.version,
+                 "myDay" = myDay,
+                 "fit" = fit)
+  }#Savefit for false
 }
 
 # Plot function for density plots and PSS prediction ribbon plot ########################################################
 #'@param outputList A list returned from Inseason function for running the inseason forecast model
-outPlots <- function(outputList, CAN_hist, GSI = FALSE){
+outPlots <- function(outputList, CAN_hist, GSI = FALSE, Retrospective = FALSE){
   outputPlots <- list()
 
 
@@ -310,6 +323,11 @@ outPlots <- function(outputList, CAN_hist, GSI = FALSE){
                            FUN = quantile, 
                            probs=c(0.025, 0.25, 0.5, 0.75, 0.975))
     
+    
+    
+    # If statement to plot without retrospective testing
+    #  When Retrospective = FALSE, then the realized Canadian-origin line is omitted
+    if(Retrospective == TRUE){
     # If statement to plot with GSI adjusted if TRUE
     if(GSI == FALSE){
     
@@ -364,6 +382,7 @@ outPlots <- function(outputList, CAN_hist, GSI = FALSE){
     }
     
     
+    
     # Extract estimates for prior, likelihood, and posterior 
     df.run <- data.frame("par" = "Runsize", "value" = pars$RunSize)
     df.prior <- data.frame("par" = "Prior", "value" = pars$prior_pf)
@@ -392,7 +411,96 @@ outPlots <- function(outputList, CAN_hist, GSI = FALSE){
       theme_tidybayes()+
       theme(text = element_text(size = 20, family = "serif"),plot.title = element_text(size = 12))+
       scale_color_discrete(name = "")
+    
+    }else{ # Else statement for Retrospective argument
+      
+      # If statement to plot with GSI adjusted if TRUE
+      if(GSI == FALSE){
+        
+        pred.plot.df <- data.frame(cumPSS,
+                                   totalEOS,
+                                   t(quant.predPSS))
+        names(pred.plot.df) <- c("cumPSS", "totalEOS","low95","low50","median",
+                                 "up50","up95")
+        
+        
+        
+        zz <- ggplot(pred.plot.df, aes(x = cumPSS/1000, y = totalEOS/1000 ))+
+          geom_point() +
+          geom_ribbon(aes(ymin=low95/1000, ymax=up95/1000,fill = "HDI 95"), alpha=0.25) +
+          geom_ribbon(aes(ymin=low50/1000, ymax=up50/1000, fill = "HDI 50"), alpha=0.25) +
+          geom_line(aes(y=median/1000, color = "Median"), show.legend = T) +
+          labs(x = "Cummulative PSS Chinook Passage (1000's)",
+               y = "Total Reconstructed EOS Chinook Passage (1000's)")+
+          theme(text = element_text(size = 20, family = "serif"),
+                panel.grid.major =element_line(),    #strip major gridlines
+                panel.grid.minor = element_blank(),    #strip minor gridlines
+                axis.ticks = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(color = "black"))+
+          scale_fill_colorblind(name = "")+
+          scale_color_colorblind(name = "")
+      } else{
+        pred.plot.df <- data.frame(cumPSS_adj,
+                                   totalEOS,
+                                   t(quant.predPSS))
+        names(pred.plot.df) <- c("cumPSS_adj", "totalEOS","low95","low50","median",
+                                 "up50","up95")
+        
+        
+        
+        zz <- ggplot(pred.plot.df, aes(x = cumPSS_adj/1000, y = totalEOS/1000 ))+
+          geom_point() +
+          geom_ribbon(aes(ymin=low95/1000, ymax=up95/1000,fill = "HDI 95"), alpha=0.25) +
+          geom_ribbon(aes(ymin=low50/1000, ymax=up50/1000, fill = "HDI 50"), alpha=0.25) +
+          geom_line(aes(y=median/1000, color = "Median"), show.legend = T) +
+          labs(x = "Cummulative Canadian-adj PSS Chinook Passage (1000's)",
+               y = "Total Reconstructed EOS Chinook Passage (1000's)")+
+          theme(text = element_text(size = 20, family = "serif"),
+                panel.grid.major =element_line(),    #strip major gridlines
+                panel.grid.minor = element_blank(),    #strip minor gridlines
+                axis.ticks = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_line(color = "black"))+
+          scale_fill_colorblind(name = "")+
+          scale_color_colorblind(name = "")
+        
+      }
+      
+      
+      
+      # Extract estimates for prior, likelihood, and posterior 
+      df.run <- data.frame("par" = "Runsize", "value" = pars$RunSize)
+      df.prior <- data.frame("par" = "Prior", "value" = pars$prior_pf)
+      df.pssPred <- data.frame("par" = "PSS_Pred", "value" = pars$curr_predPSS)
+      df.postPredPss <- data.frame("par" = "PSS_post_pred", "value" = pars$post_curr_predPSS)
+      
+      # Bind into one dataframe with 2 columns
+      df.comb <- rbind(df.prior,df.postPredPss,df.run)
+      # df.comb$par <- levels(df.comb$par, levels = c("Prior","PSS_post_pred","Runsize"))
+      # Density plots comparing pf, linear prediction, and posterior estimate
+      postDense <-ggplot(df.comb, aes(x = value/1000, fill = par))+
+        geom_density(alpha = .65)+
+        geom_vline( aes(xintercept = median(pars$RunSize)/1000,
+                        col = "Median Projection"),
+                    linetype = 2,
+                    size = 1.5)+
+        # ylab("Relative Probability")+
+        ylab("")+
+        xlab("")+
+        # ggtitle(paste("Version = ",Ver,"\n Day = ",myD,"\n Year = ",myY, sep = ""))+
+        # xlab("1000's of Chinook Salmon")+
+        coord_cartesian(xlim = c(0,200))+
+        scale_fill_colorblind(name = "", 
+                              labels = c( "Preseason Forecast (Prior)", 
+                                          "PSS Prediction","Runsize Projection"))+
+        theme_tidybayes()+
+        theme(text = element_text(size = 20, family = "serif"),plot.title = element_text(size = 12))+
+        scale_color_discrete(name = "")
+    }
     outputPlots <- list("DensPlot" = postDense, "PredPlot"= zz)
+    
+    
   
   return(outputPlots)
 }

@@ -33,7 +33,7 @@ data {
   int <lower=0>yearPSS[n_yearPSS];
   
   // Matrix of historic counts by days & years
-  int <lower=0>n_hist_counts;
+  // int <lower=0>n_hist_counts;
   matrix <lower=0>[n_dayPSS, n_yearPSS]PSS_mat;
   
   // Current year counts up to myDay

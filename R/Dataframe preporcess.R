@@ -31,7 +31,7 @@ dir.data <- file.path(wd,"Data")
 dir.R <- file.path(wd,"R")
 
 # Read in the file as xlsx
-PSS <- read_xlsx(file.path(dir.data,"Yukon Escapement Daily 9June22.xlsx"),skip = 3)
+PSS <- read_xlsx(file.path(dir.data,"ADFG PSS Daily/Yukon Escapement Daily 14June22.xlsx"),skip = 3)
 
 # Add a day column with the appropriate day ranges
 PSS$Day <- c(148:252)

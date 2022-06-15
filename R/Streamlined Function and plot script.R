@@ -79,13 +79,13 @@ GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year unadj 27April22.RD
 
 
 # Control Section ##################################################################
-model.version <- "2.0"
+model.version <- "3.2"
 
 # Range of years 1995 to 2022 (1996 is not available)
 myYear <- 2022
 
 # Range of days 152 (June 1) - 243 (August 31)
-myDay <- 160
+myDay <- 165
 
 # MCMC Parameters
 n.chains <- 4
@@ -117,8 +117,10 @@ model.output <-InSeasonProjection(model.version = model.version,
 #     2. Plot of PSS passage against EOS reconstructed Canadian abundance with
 #        High Density Intervals (HDI) of 50 and 95 %.
 
+# Select GSI = TRUE if running model versions 3
+# Select Retrospective = FALSE if running inseason projection for current year
 outPlots(outputList = model.output ,
-         CAN_hist = CAN_hist, GSI = FALSE, Retrospective = FALSE)
+         CAN_hist = CAN_hist, GSI = TRUE, Retrospective = FALSE)
 
 # Generate intervals *Note that pars may be changed to any parameter of interest
 mcmc_intervals(x = model.output$fit, pars = "RunSize", prob_outer = .9, prob = .5 )

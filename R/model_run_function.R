@@ -152,17 +152,20 @@ InSeasonProjection <- function(model.version,
   }
   
   # Vector containing avg GSI proportions for each day across all years
-  meanGSI_vect <- vector(length = length(152:myDay))
-  names(meanGSI_vect) <- c(152:myDay)
-  sdGSI_vect <- vector(length = length(152:myDay))
-  names(sdGSI_vect) <- c(152:myDay)
+  meanGSI_vect <- vector(length = length(startDayPSS:myDay))
+  names(meanGSI_vect) <- c(startDayPSS:myDay)
+  sdGSI_vect <- vector(length = length(startDayPSS:myDay))
+  names(sdGSI_vect) <- c(startDayPSS:myDay)
   
   counter <- 1
-  for (d in 152:myDay) {
+  for (d in startDayPSS:myDay) {
     meanGSI_vect[counter]<- mean(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
     sdGSI_vect[counter]<- sd(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
     counter <- counter+1
   }
+  # No GSI data for day 148 and 149. Use day 150 for these values
+  meanGSI_vect[1:2] <- meanGSI_vect[3]
+  sdGSI_vect[1:2] <- sdGSI_vect[3]
   
   # Mean GSI by mean strata dates. This is used in versions 3.4 and up #############################
   meanStartDay <-GSI_by_year %>% group_by(stratum) %>% 

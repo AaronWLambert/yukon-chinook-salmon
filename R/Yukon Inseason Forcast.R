@@ -87,12 +87,12 @@ GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year unadj 27April22.RD
 
 # Control Section ######################
 # This is where the user can input dates, stan model, and stan model controls.
-model.version <- "1.0"
+model.version <- "3.2"
 # Range of years 1995 to 2021
 myYear <- 2022
 
 # Range of days 152 -243
-myDay <- 158
+myDay <- 165
 
 # MCMC Parameters
 n.chains <- 4
@@ -212,18 +212,22 @@ for (i in 1:n_yearPSS) {
 }
 
 # Vector containing avg GSI proportions for each day ACROSS ALL YEARS (for versions 3.1,3.2,3.3) ####
-meanGSI_vect <- vector(length = length(152:myDay))
-names(meanGSI_vect) <- c(152:myDay)
-sdGSI_vect <- vector(length = length(152:myDay))
-names(sdGSI_vect) <- c(152:myDay)
+meanGSI_vect <- vector(length = length(startDayPSS:myDay))
+names(meanGSI_vect) <- c(startDayPSS:myDay)
+sdGSI_vect <- vector(length = length(startDayPSS:myDay))
+names(sdGSI_vect) <- c(startDayPSS:myDay)
 
 counter <- 1
-for (d in 152:myDay) {
-  d = 175
+for (d in startDayPSS:myDay) {
+  # d = 175
   meanGSI_vect[counter]<- mean(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
   sdGSI_vect[counter]<- sd(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
   counter <- counter+1
 }
+
+# No GSI data for day 148 and 149. Use day 150 for these values
+meanGSI_vect[1:2] <- meanGSI_vect[3]
+sdGSI_vect[1:2] <- sdGSI_vect[3]
 
 # Mean GSI by mean strata dates. This is used in versions 3.4 and up #############################
 meanStartDay <-GSI_by_year %>% group_by(stratum) %>% 
@@ -340,8 +344,8 @@ fit <- stan(file = file.path(dir.stan,paste("Yukon Inseason Forecast ",
 
 # Figures Section ################################
 
-traceplot(object = fit, c("alpha","beta","sigma", "RunSize"))
-                          # "phi","propCAN[1]","propCAN[4]"))
+traceplot(object = fit, c("alpha","beta","sigma", "RunSize",
+                          "phi","propCAN[1]","propCAN[4]"))
 # shinystan::launch_shinystan(as.shinystan(fit))
 
 mcmc_pairs(fit, pars = c("alpha","sigma", "beta", "phi"))
@@ -500,3 +504,4 @@ polygon(x = c(cumPSS_adj[ord], rev(cumPSS_adj[ord])),
         y = c(quant.predPSS[2,ord],rev(quant.predPSS[4,ord])),
         col=rgb(1,0,0, alpha=0.2), border=FALSE)
 lines(x = cumPSS_adj[ord], quant.predPSS[3,ord], col = "red", lw = 2)
+

@@ -10,6 +10,8 @@ A management tool created to generate an inseason projection for each day during
 |Figs|Plots and figures generated for analysis and visualization.|
 |Output|Model generated results for retrospective testing. These files are not included in the repository as they are too large to upload.|
 |Stan| Stan scripts that are called in the Rstan model. These include different versions of the model utilizing methods that are currently being assessed for their predictive performance.|
+|Model Version and Variable Descriptions| Spread sheet of variable descriptions and short model descriptions.|
+|Mathematical Model Descriptions| Descrptions of the model versions with the accompanying math and equations.|
 
 ## Note
 This project is in progress and all results are preliminary.

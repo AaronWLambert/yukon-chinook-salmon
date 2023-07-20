@@ -24,6 +24,9 @@ retrospective.function<- function(outputList,
                                   testYears, 
                                   testDays, 
                                   CAN_hist,
+                                  pf_hist,
+                                  startYearRetro = 2007,
+                                  endYearRetro = 2022,
                                   pf = FALSE){
   # OutputList <- a list of outputs from the Stan model runs for days and years
   # testYears <- vector of days included in OutputList
@@ -57,13 +60,26 @@ retrospective.function<- function(outputList,
   
   # Extract medians from posterior RunSize prediction and place in vector for matrix pop.
   # populate matrix with medians from posterior RunSize prediction
-  counter <- 1
+  # counter <- 1
+  # for (y in 1:length(testYears)) {
+  #   for (d in 1:length(testDays)) {
+  #     
+  #     median_mat[d,y]<- median(outputList[[counter]]$pars$RunSize)
+  #     
+  #     counter <- counter+1
+  #   }
+  # }
+  
   for (y in 1:length(testYears)) {
     for (d in 1:length(testDays)) {
       
-      median_mat[d,y]<- median(outputList[[counter]]$pars$RunSize)
+      y1<-testYears[y]
+      d1<-testDays[d]
       
-      counter <- counter+1
+      median_mat[d,y]<- median(outputList[[paste(y1,"_",d1,sep = "")]]$pars$RunSize)
+      
+      # print(d)
+      # print(y)
     }
   }
   median_mat
@@ -80,9 +96,7 @@ retrospective.function<- function(outputList,
   dim(realized_mat)
   
   # Extract values for realized runsize
-  realized_vect <- CAN_hist$can.mean[CAN_hist$Year >= 2007&
-                                       CAN_hist$Year != 2011 & 
-                                       CAN_hist$Year != 2012]
+  realized_vect <- CAN_hist$can.mean[CAN_hist$Year >= startYearRetro] 
   
   counter <- 1
   # Populate the realized matrix
@@ -106,7 +120,7 @@ retrospective.function<- function(outputList,
   for (y in 1:length(testYears)) {
     for (d in 1:length(testDays)) {
       
-      PE_mat[d,y]<- (realized_mat[d,y]- median_mat[d,y])/realized_mat[d,y]
+      PE_mat[d,y]<- (median_mat[d,y]- realized_mat[d,y])/realized_mat[d,y]
       
     }
   }
@@ -226,19 +240,32 @@ retrospective.function<- function(outputList,
     # Make sure it works...
     dim(median_mat)
     str(median_mat)
+    # Extract values for realized runsize
+    pf_vect <- pf_hist$mean[pf_hist$Year>=startYearRetro &
+                                           pf_hist$Year <= endYearRetro]
     
-    # Extract medians from posterior RunSize prediction and place in vector for matrix pop.
-    # populate matrix with medians from posterior RunSize prediction
     counter <- 1
+    # Populate the realized matrix
     for (y in 1:length(testYears)) {
       for (d in 1:length(testDays)) {
         
-        median_mat[d,y]<- median(outputList[[counter]]$pars$prior_pf )
+        median_mat[d,y]<- pf_vect[counter]
         
-        counter <- counter+1
       }
+      counter <- counter+1
     }
-    median_mat
+    # Extract medians from posterior RunSize prediction and place in vector for matrix pop.
+    # populate matrix with medians from posterior RunSize prediction
+    # counter <- 1
+    # for (y in 1:length(testYears)) {
+    #   for (d in 1:length(testDays)) {
+    #     
+    #     median_mat[d,y]<- median(outputList[[counter]]$pars$prior_pf )
+    #     
+    #     counter <- counter+1
+    #   }
+    # }
+    # median_mat
     
     # Matrix with realized reconstructed counts by year and day 
     
@@ -252,17 +279,16 @@ retrospective.function<- function(outputList,
     dim(realized_mat)
     
     # Extract values for realized runsize
-    realized_vect <- CAN_hist$can.mean[CAN_hist$Year >= 2007 &
-                                         CAN_hist$Year != 2011 & 
-                                         CAN_hist$Year != 2012]
-    
+    realized_vect <- CAN_hist$can.mean[CAN_hist$Year >= startYearRetro &
+                                         CAN_hist$Year <= endYearRetro ]
+
     counter <- 1
     # Populate the realized matrix
     for (y in 1:length(testYears)) {
       for (d in 1:length(testDays)) {
-        
+
         realized_mat[d,y]<- realized_vect[counter]
-        
+
       }
       counter <- counter+1
     }
@@ -278,7 +304,7 @@ retrospective.function<- function(outputList,
     for (y in 1:length(testYears)) {
       for (d in 1:length(testDays)) {
         
-        PE_mat[d,y]<- (realized_mat[d,y]- median_mat[d,y])/realized_mat[d,y]
+        PE_mat[d,y]<- (median_mat[d,y]- realized_mat[d,y])/realized_mat[d,y]
         
       }
     }
@@ -407,3 +433,60 @@ retrospective.function<- function(outputList,
 
 # Retro Plots function ###########################################################3
 
+# Functions for extracting parameter values ################################################
+
+runsize_trend_func <- function(mod, testYears, testDays, CAN_hist, PF){
+  
+  # Matrix of Runsize estimates
+  RunSize_vect <- vector(length=length(mod))
+  
+  for (p in 1:length(RunSize_vect)) {
+    RunSize_vect[p]<- median(mod[[p]]$pars$RunSize)
+  }
+  
+  # RunSize_mat <-matrix(RunSize_vect, 
+  #                      nrow = length(testDays), 
+  #                      ncol = length(testYears),
+  #                      byrow = FALSE) 
+  RunSize_mat <-matrix(RunSize_vect, 
+                       nrow = length(testDays), 
+                       ncol = length(testYears),
+                       byrow = FALSE)
+  colnames(RunSize_mat)<- c(testYears)
+  RunSize_DF <- as.data.frame((RunSize_mat))
+  # RunSize_DF$day <- testDays
+  RunSize_DF$day <- testDays
+  RunSize_DF <- as.data.frame(pivot_longer(RunSize_DF,cols = -day))
+  names(RunSize_DF)<- c("Day", "Year", "RunSize")
+  RunSize_DF$Year<- as.double(RunSize_DF$Year)
+  RunSize_DF <- left_join(RunSize_DF,CAN_hist)
+  RunSize_DF <- left_join(RunSize_DF, PF)
+  
+  # Matrix of 2007 Runsize estimates
+  PSSpred_vect <- vector(length=length(mod))
+  
+  for (p in 1:length(RunSize_vect)) {
+    PSSpred_vect[p]<- median(mod[[p]]$pars$post_curr_predPSS)
+  }
+  
+  # Matrix of PSS prediction
+  PSSpred_mat <-matrix(PSSpred_vect,
+                       nrow = length(testDays),
+                       ncol = length(testYears),
+                       byrow = FALSE)
+  # PSSpred_mat <-matrix(PSSpred_vect, 
+  #                      nrow = length(testDays_short), 
+  #                      ncol = length(testYears),
+  #                      byrow = FALSE) 
+  colnames(PSSpred_mat)<- c(testYears)
+  PSSpred_DF <- as.data.frame((PSSpred_mat))
+  # PSSpred_DF$day <- testDays
+  PSSpred_DF$day <- testDays
+  PSSpred_DF <- as.data.frame(pivot_longer(PSSpred_DF,cols = -day))
+  names(PSSpred_DF)<- c("Day", "Year", "PSSpred")
+  PSSpred_DF$Year<- as.double(PSSpred_DF$Year)
+  RunSize_DF <- left_join(PSSpred_DF,RunSize_DF)
+  RunSize_DF$Version <- as.factor(mod[[1]]$version)
+  
+  return(RunSize_DF)
+} # End of function

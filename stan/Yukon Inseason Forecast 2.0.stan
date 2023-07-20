@@ -1,11 +1,10 @@
 // Yukon King Inseason Forecast Version 2.0
-//Notes: log(EOS)~cumPSS
+//Notes: 
 
 
 //Components:
 //  1) Pre-season forecast  (Prior)
-//  2) PSS current counts
-//  3) Regression for EOS Canadian
+//  2) log(EOS-Can) ~ PSS 
 //
 //  
 
@@ -16,11 +15,11 @@ data {
   // This years Preseason forecast
   real<lower=0> Pf;
   real<lower=0> Pf_sigma;
-  
+  int <lower=0> n_yearsPF;
 
   // EOS Canadian counts by year up to myyear -1
   int<lower=0> n_totalEOS ;
-  real<lower=0> totalEOS[n_totalEOS];
+  vector<lower=0> [n_totalEOS]totalEOS;
   
   // PSS days up to myDay
   int n_dayPSS ;
@@ -38,6 +37,8 @@ data {
   int<lower=0> n_curr_PSS;
   real<lower=0> curr_PSS[n_curr_PSS];
   
+  // Pointer vector
+  int <lower=0> loc_pf_years_PSS[n_yearsPF];
 }
 
 // 
@@ -58,16 +59,16 @@ transformed parameters{
   real cumHistPSS[n_yearPSS];
   
   // Empty vector for predicted PSS counts in transformed parameters
-  real ln_predPSS[n_yearPSS];
-  
-  // Predicted Runsize
-  real RunSize;
+  vector [n_yearPSS]ln_predPSS;
   
   //
   real cum_current_PSS;
   
   //
   real ln_curr_predPSS;
+  
+  //
+  real sigma_predPSS;
   
   // Loop to get cumulative counts
  for (i in 1:n_yearPSS){
@@ -78,14 +79,18 @@ transformed parameters{
  for (i in 1:n_yearPSS){
  ln_predPSS[i] = alpha + beta * cumHistPSS[i];}
  
- // Bring it back to reality
- RunSize = exp(ln_RunSize);
+   // Empirical SD for update  
+ sigma_predPSS = sd(log(totalEOS[loc_pf_years_PSS]) - ln_predPSS[loc_pf_years_PSS]);
+ // sigma_predPSS = sd(log(totalEOS[loc_pf_years_PSS] ./  exp(ln_predPSS[loc_pf_years_PSS])));
  
  // Sum curr_PSS
  cum_current_PSS = sum(curr_PSS);
  
  //
- ln_curr_predPSS = alpha + beta * cum_current_PSS;
+ ln_curr_predPSS = alpha + beta * cum_current_PSS ;
+ 
+ // print("ln_predPSS",ln_predPSS);
+ // print("sigma_predPSS",sigma_predPSS);
 }
 
 model {
@@ -97,18 +102,27 @@ model {
   // Preseason Forcast
   ln_RunSize ~ normal(Pf, Pf_sigma);
   
-  //Likelihood Function
+  // //Likelihood Function
+  // for(i in 1:n_yearPSS){
+  //   // log(totalEOS[i]) ~ normal(log(predPSS), sigma);
+  //   // target += normal_lpdf(totalEOS|predPSS,sigma);
+  //   // totalEOS[i]~normal(predPSS[i], sigma);
+  //   // Change here
+  //   log(totalEOS[i])~normal((ln_predPSS[i]),sigma);
+  //   // log(totalEOS[i])~normal(log(predPSS[i]),sigma);
+  // }
+    //Likelihood Function
   for(i in 1:n_yearPSS){
     // log(totalEOS[i]) ~ normal(log(predPSS), sigma);
     // target += normal_lpdf(totalEOS|predPSS,sigma);
     // totalEOS[i]~normal(predPSS[i], sigma);
-    // Change here
-    log(totalEOS[i])~normal((ln_predPSS[i]),sigma);
+    
+    log(totalEOS[i])~normal(ln_predPSS[i],sigma);
     // log(totalEOS[i])~normal(log(predPSS[i]),sigma);
   }
   
   // Update for the posterior
-  target += normal_lpdf(ln_RunSize | ln_curr_predPSS,sigma);
+  target += normal_lpdf(ln_RunSize | ln_curr_predPSS, sigma_predPSS);
 
 }
 
@@ -118,13 +132,16 @@ generated quantities{
   
   real prior_pf;
   // 
-  real predPSS[n_yearPSS];
+  vector [n_yearPSS]predPSS;
   //
   real curr_predPSS;
   
   real ln_post_curr_predPSS;
   
   real post_curr_predPSS;
+  
+  // Predicted Runsize
+  real RunSize;
   
   ln_prior_pf = normal_rng(Pf,Pf_sigma);
   
@@ -134,9 +151,12 @@ generated quantities{
   //
   curr_predPSS = exp(ln_curr_predPSS);
   
-  ln_post_curr_predPSS = normal_rng(ln_curr_predPSS, sigma);
+  ln_post_curr_predPSS = normal_rng(ln_curr_predPSS, sigma_predPSS);
   
   post_curr_predPSS = exp(ln_post_curr_predPSS);
+  
+   // Bring it back to reality
+  RunSize = exp(ln_RunSize);
 }
 
 

@@ -1,13 +1,10 @@
-// Yukon King Inseason Forecast
+// Yukon King Inseason Forecast version 1.0
 //Notes:
 
 
 //Components:
 //  1) Pre-season forecast  (Prior)
-//  2) PSS current counts
-//  3) Regression for EOS Canadian
-//  4) Logsistic curve for EOS Canadian
-//  5) Steepness of curve (s) perhaps mean and sd of past years? As prior?
+//  2) EOS-Can ~ PSS in normal space
 //
 //  
 
@@ -18,11 +15,12 @@ data {
   // This years Preseason forecast
   real <lower=0>Pf;
   real <lower=0>Pf_sigma;
+  int <lower=0> n_yearsPF;
   
 
   // EOS Canadian counts by year up to myyear -1
   int <lower=0>n_totalEOS ;
-  real<lower=0> totalEOS[n_totalEOS];
+  vector<lower=0> [n_totalEOS]totalEOS;
   
   // PSS days up to myDay
   int<lower=0> n_dayPSS ;
@@ -39,6 +37,9 @@ data {
   // Current year counts up to myDay
   int <lower=0> n_curr_PSS;
   real <lower=0> curr_PSS[n_curr_PSS];
+  
+  // Pointer vector for PF years in PSS
+  int <lower=0> loc_pf_years_PSS[n_yearsPF];
   
 }
 
@@ -60,16 +61,18 @@ transformed parameters{
   real cumHistPSS[n_yearPSS];
   
   // Empty vector for predicted PSS counts in transformed parameters
-  real predPSS[n_yearPSS];
+  vector [n_yearPSS]predPSS;
   
-  // Variable for posterior abundance
-  real RunSize;
+  // // Variable for posterior abundance
+  // real RunSize;
   
   // Variable for cummulative myYear PSS passage
   real cum_current_PSS;
   
   //
   real curr_predPSS;
+  
+  real sigma_predPSS;
   
   // Loop to get cumulative counts
  for (i in 1:n_yearPSS){
@@ -79,15 +82,24 @@ transformed parameters{
  //  Calculate predPSS from aplha, beta and cumHistPSS for model section
  for (i in 1:n_yearPSS){
  predPSS[i] = alpha + beta * cumHistPSS[i];}
+ // predPSS[i] = beta * cumHistPSS[i];}
  
- //
- RunSize = exp(ln_RunSize);
+ // Sigma calculation for update
+ //  Only years used in PF comparison are used here
+ sigma_predPSS = sd(log(totalEOS[loc_pf_years_PSS] ./ predPSS[loc_pf_years_PSS]));
+ 
+ // //
+ // RunSize = exp(ln_RunSize);
  
  // Sum curr_PSS
  cum_current_PSS = sum(curr_PSS);
  
  //
  curr_predPSS = alpha + beta * cum_current_PSS;
+ // curr_predPSS = beta * cum_current_PSS;
+ 
+ 
+ 
 }
 
 model {
@@ -105,32 +117,41 @@ model {
     // target += normal_lpdf(totalEOS|predPSS,sigma);
     // totalEOS[i]~normal(predPSS[i], sigma);
     // Change here
-    log(totalEOS[i])~normal(log(predPSS[i]),sigma);
+    log(totalEOS[i]) ~ normal(log(predPSS[i]),sigma);
     // log(totalEOS[i])~normal(log(predPSS[i]),sigma);
   }
   
   // Update for the posterior
-  target += normal_lpdf(ln_RunSize | log(curr_predPSS),sigma);
+  target += normal_lpdf(ln_RunSize | log(curr_predPSS),sigma_predPSS);
 
 }
 
 generated quantities{
   //
   real ln_prior_pf;
+  
   real prior_pf;
   
   real ln_post_curr_predPSS;
+  
   real post_curr_predPSS;
+  
+  // Variable for posterior abundance
+  real RunSize;
   
   // Predicted forecast
   ln_prior_pf = normal_rng(Pf,Pf_sigma);
+  
   // Expenential of log predicted preseason forecast
   prior_pf = exp(ln_prior_pf);
   
   // Predicted PSS passage
-  ln_post_curr_predPSS = normal_rng(log(curr_predPSS), sigma);
+  ln_post_curr_predPSS = normal_rng(log(curr_predPSS), sigma_predPSS);
+  
   post_curr_predPSS = exp(ln_post_curr_predPSS);
+  
+  //
+  RunSize = exp(ln_RunSize);
 }
-
 
 

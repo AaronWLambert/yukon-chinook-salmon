@@ -41,7 +41,7 @@ GSI_mean<-readRDS(file = file.path(dir.data,"Mean GSI by strata 2005-2020.RDS"))
 
 # Read in genetic stock identification (2005-2019) 
 # (adjusted to capture early and late runs)
-GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by year"))
+GSI_by_year <- readRDS(file = file.path(dir.data,"GSI by Year unadj 27April22.RDS"))
 
 # Plot Historic Counts by Canadian EOS for different days of interest #####
 
@@ -66,7 +66,7 @@ for(i in seq(from = 152, to = 212, by = 10)){
   
   test2 <- merge(x = test, y = CAN_hist, by = "Year")
   
-p[[paste("Plot",i)]]<- ggplot(test2, aes(x = CummCount, y = log(can.mean))) +
+p[[paste("Plot",i)]]<- ggplot(test2, aes(x = (CummCount), y = log(can.mean))) +
     geom_point(aes(color =factor(Year)), show.legend = TRUE) +
     geom_smooth(method = "lm") +
     # xlab("PSS Sonar Count (Unadjusted)") +
@@ -358,37 +358,175 @@ annotate_figure(meanAdj,
 
 
 
-# GSI Plots by year #########################################33
-un_GSI_by_year <- readRDS(file = file.path(dir.data,"un_adj_GSI_by_year.RDS"))
+# GSI Plots by year #########################################
 
-head(un_GSI_by_year)
-hist(un_GSI_by_year$propCan)
-shapiro.test(un_GSI_by_year$propCan)
+
+GSI_by_year <- readRDS(file = file.path(dir.data,"Old data files","un_adj_GSI_by_year.RDS"))
+
+head(GSI_by_year)
+hist(GSI_by_year$propCan)
+shapiro.test(GSI_by_year$propCan)
 
 GSI_by_year$stratumLength <- GSI_by_year$endday - GSI_by_year$startday
 
-un_GSI_by_year %>%  ggplot(aes(x = stratum, y = propCan,  col = factor(year)))+
+GSI_by_year %>%  ggplot(aes(x = stratum, y = propCan,  col = factor(year)))+
   geom_line()+
   geom_point()+
   xlab("Stratum")+
   ylab("Propotion of PSS Canadian Stock")+
   labs(color = "Year")
 
-un_GSI_by_year %>% ggplot(aes(xmin = ((year)-.2),xmax = ((year)+.2),
+GSI_by_year %>% ggplot(aes(xmin = ((year)-.2),xmax = ((year)+.2),
                            ymin =startday, ymax = endday, 
-                           col = factor(stratum), 
-                           fill = propCan))+
-  geom_rect(alpha=0.9,size = 1) +
+                           # col = factor(stratum),
+                           fill = propCan,
+                           # fill = factor(stratum)
+                           ))+
+  geom_rect(alpha=1,size = 1) +
   scale_x_continuous(breaks=2005:2020,limits=c(2004,2021)) +
-  scale_y_continuous(breaks = waiver(),limits=c(150,250)) +
+  scale_y_continuous(breaks = seq(152,204,7), labels = c("June 1",
+                                                         "June 10",
+                                                         "June 20",
+                                                         "June 30",
+                                                         "July 10",
+                                                         "July 20",
+                                                         "July 30",
+                                                         "August 6")) +
   xlab("Years") +
   ylab("Days") +
   # theme_solarized()+
   # theme(axis.text.x = element_text(angle = 90))+
-  scale_color_manual(values = c("Red","Green","Blue", "yellow"))+
-  scale_fill_viridis(option = "A")+
-  coord_flip()+
-  labs(fill = "Proportion Canadian", color = "Stratum")
+  # scale_color_manual(values = c("Grey","dark Green","pink", "yellow"))+
+  scale_fill_viridis(option = "C")+
+  # scale_fill_continuous()+
+  
+  labs(fill = "Proportion Canadian", color = "Pulse")+
+  # coord_cartesian(ylim = c(150,210))+
+  coord_flip(ylim = c(150,200))+
+  theme(text = element_text(size = 18),
+        axis.text.x = element_text(angle = 90))
   
 
+# Mean GSI by mean strata dates. This is used in versions 3.4 and up #####################
+meanStartDay <-GSI_by_year %>% group_by(stratum) %>% 
+  summarise("meanStartDay" = mean(startday)) %>% 
+  as.data.frame()
 
+GSI_mean_by_strata <-GSI_by_year %>% 
+  summarize("stratumMean" = c(mean(propCan[stratum == 1]),
+                              mean(propCan[stratum == 2]),
+                              mean(propCan[stratum == 3 | stratum == 4])),
+            "stratumSD" = c(sd(propCan[stratum == 1]),
+                            sd(propCan[stratum == 2]),
+                            sd(propCan[stratum == 3 | stratum == 4]))) %>%  as.data.frame()
+
+GSI <- cbind(GSI_mean_by_strata,round(meanStartDay[1:3,]))
+
+head(GSI_by_year)
+head(GSI)
+GSI$endday <- c(171,180,207)
+
+GSI_new <- GSI %>% rename(propCan = stratumMean,
+                          startday = meanStartDay,
+                          sd = stratumSD)
+
+GSI_new$year <- 2004
+GSI_new$startday[1]<- 152
+GSI_AVG <- rbind(GSI_by_year[1:6],GSI_new)
+
+# Vector containing avg GSI proportions for each day ACROSS ALL YEARS (for versions 3.0,3.1,3.2,3.3) ####
+meanGSI_vect <- vector(length = length(startDayPSS:myDay))
+
+names(meanGSI_vect) <- c(startDayPSS:myDay)
+
+# Vector of GSI sd
+sdGSI_vect <- vector(length = length(startDayPSS:myDay))
+
+names(sdGSI_vect) <- c(startDayPSS:myDay)
+
+counter <- 1
+for (d in startDayPSS:myDay) {
+  # d = 175
+  meanGSI_vect[counter]<- mean(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
+  
+  sdGSI_vect[counter]<- sd(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
+  
+  counter <- counter+1
+}
+
+dayAvgDF <- data.frame(Year = 2003, propCan = meanGSI_vect, day = c(148:208))
+str(dayAvgDF$Year)
+str(GSI_avg$year)
+
+GSI_AVG %>% ggplot()+
+  geom_rect(aes(xmin = ((year)-.2),xmax = ((year)+.2),
+                ymin =startday, ymax = endday, 
+                # col = factor(stratum),
+                fill = propCan,
+                # fill = factor(stratum)
+  ))+
+  # geom_rect(alpha=1,size = 1) +
+  geom_tile(data = dayAvgDF, aes(x = Year,
+                                 y = day,
+                                 fill = propCan,
+                                 width = .4))+
+  # geom_tile(data = dayAvgDF, aes(x = Year, y = day, fill = propCan))+
+  scale_x_continuous(breaks=2003:2020,
+                     limits=c(2002,2021),
+                     labels = c("AVG by Day","AVG by Stratum",2005:2020)) +
+  scale_y_continuous(breaks = seq(152,204,7), labels = c("June 1",
+                                                         "June 10",
+                                                         "June 20",
+                                                         "June 30",
+                                                         "July 10",
+                                                         "July 20",
+                                                         "July 30",
+                                                         "August 6")) +
+  xlab("Years") +
+  ylab("Days") +
+  # theme_solarized()+
+  # theme(axis.text.x = element_text(angle = 90))+
+  # scale_color_manual(values = c("Grey","dark Green","pink", "yellow"))+
+  scale_fill_viridis(option = "C")+
+  # scale_fill_continuous()+
+  
+  labs(fill = "Proportion Canadian", color = "Pulse")+
+  # coord_cartesian(ylim = c(150,210))+
+  coord_flip(ylim = c(150,200))+
+  theme(text = element_text(size = 18),
+        axis.text.x = element_text(angle = 90))
+
+
+
+
+# Vector containing avg GSI proportions for each day ACROSS ALL YEARS (for versions 3.0,3.1,3.2,3.3) ####
+meanGSI_vect <- vector(length = length(startDayPSS:myDay))
+
+names(meanGSI_vect) <- c(startDayPSS:myDay)
+
+# Vector of GSI sd
+sdGSI_vect <- vector(length = length(startDayPSS:myDay))
+
+names(sdGSI_vect) <- c(startDayPSS:myDay)
+
+counter <- 1
+for (d in startDayPSS:myDay) {
+  # d = 175
+  meanGSI_vect[counter]<- mean(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
+  
+  sdGSI_vect[counter]<- sd(GSI_by_year$propCan[GSI_by_year$startday <= d & GSI_by_year$endday >=d])
+  
+  counter <- counter+1
+}
+
+tail(GSI_AVG)
+
+
+
+
+
+
+
+
+ggplot(dayAvgDF, aes(x = Year, y = day, fill = propCan))+
+  geom_tile()

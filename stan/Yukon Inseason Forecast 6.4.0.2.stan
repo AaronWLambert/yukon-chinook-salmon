@@ -1,5 +1,6 @@
 // Yukon King Inseason Forecast Version 6.4.0.2
 // Notes: fitting a normal curve to total PSS passage to predict EOS Can-origin Chinook abundance
+//        Midpoint prediction used directly in the curve fitting 
 
 
 // Components:
@@ -95,7 +96,7 @@ parameters {
   // Normal curve paramaters for current year
   real <lower=10e3,upper=4e5> ps_alpha_curr;
   // real <lower=0> ps_alpha_curr;
-  real <lower=165,upper=181> ps_mu_curr;
+  // real <lower=165,upper=181> ps_mu_curr;
   // real <lower=0> ps_mu_curr;
   real <lower=1,upper = 14> ps_sd_curr;
   // real <lower=0> ps_sd_curr;
@@ -104,7 +105,7 @@ parameters {
   // Normal curve parameters for histric years
   real <lower=10e3,upper = 4e5> ps_alpha_hist[n_yearPSS];
   // real <lower=0> ps_alpha_hist[n_yearPSS];
-  real <lower=165,upper=181> ps_mu_hist[n_yearPSS];
+  // real <lower=165,upper=181> ps_mu_hist[n_yearPSS];
   // real <lower=0> ps_mu_hist[n_yearPSS];
   real <lower=1,upper=14> ps_sd_hist[n_yearPSS];
   // real <lower=0> ps_sd_hist[n_yearPSS];
@@ -116,9 +117,9 @@ parameters {
   real <lower=0> sigma_reg;
   
   // Regression parameters for sst regression
-  real alpha_sst;
+  real alpha_env;
   real beta_sst;
-  real <lower=0> sigma_sst;
+  real <lower=0> sigma_env;
   
   
   // 
@@ -186,9 +187,9 @@ transformed parameters{
   
   
   // Predicted MP
-  predMP = alpha_sst + beta_sst * may_sst_hist;
+  predMP = alpha_env + beta_sst * may_sst_hist;
   
-  curr_predMP = alpha_sst + beta_sst * may_sst_curr;
+  curr_predMP = alpha_env + beta_sst * may_sst_curr;
   
   // Curve fit to current season/year of interest
   ps_pred_curr[1:n_dayPSS_all] = ps_alpha_curr * (1/(ps_sd_curr*sqrt(2*pi())))*exp(-0.5*square((dayPSS_all - curr_predMP)/ps_sd_curr));
@@ -308,6 +309,11 @@ model {
   sigma_hist ~ normal(0,5);
   // sigma_hist ~ uniform(0,3);
   
+  // Runtiming regression priors
+  alpha_env ~ normal(0,1e9);
+  beta_sst ~ normal(0,1e9);
+  sigma_env ~ normal(0,5);
+  
   // Regression priors
   alpha ~ normal(0,1e15);
   beta ~ normal(0,1e15);
@@ -316,7 +322,7 @@ model {
   // Preseason Forcast likelihood
   ln_RunSize ~ normal(Pf, Pf_sigma);
   
-  hist_MP ~ normal(predMP, sigma_sst);
+  log(hist_MP) ~ normal(log(predMP), sigma_env);
   
   // Arrival dist curve fitting likelihood
     for(d in 1:n_dayPSS){
@@ -381,6 +387,10 @@ generated quantities{
   RunSize = exp(ln_RunSize);
 
 }
+
+
+
+
 
 
 

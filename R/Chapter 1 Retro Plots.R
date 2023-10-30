@@ -111,6 +111,8 @@ memory.limit(size = 60000)
 # name = version_reconstructionMethod_truncated years in regression
 ver1_RR_T <- readRDS(file = file.path(dir.output, "Ver1_rr_trunc_FINAL_5June23.RDS"))
 
+# ver1_RR_Full <- readRDS(file = file.path(dir.output, "Ver1_RRCAN_long_27Apr23.RDS"))
+
 ver11_RR_T <- readRDS(file = file.path(dir.output, "Ver11_rr_trunc_final_13May23.RDS"))
 
 ver101_RR_T <- readRDS(file = file.path(dir.output, "Ver101_rr_trunc_final_13May23.RDS"))
@@ -125,9 +127,14 @@ ver2_RR_T <- readRDS(file = file.path(dir.output,"Ver2_rr_trunc_final_13May23.RD
 
 ver2c_RR_T <- readRDS(file = file.path(dir.output,"Ver2c_rr_trunc_final_13May23.RDS")) 
 
+# Version fitting one logistic curve to get proportions
+ver602_RR_T <- readRDS(file = file.path(dir.output,"Ver6propNull_final_27Sept23.RDS")) 
+
+# Version fitting normal curve to all years
 ver402_RR_T <- readRDS(file=file.path(dir.output,"Ver402_rr_trunc_FINAL_13July23.RDS"))
 
-ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_FINAL_5June25.RDS"))
+# Version fitting logistic curve to all years
+ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_final_31Julu23.RDS"))
 
 # ver2_RR <- readRDS(file = file.path(dir.output,"Ver2_RRCAN_long_1May23.RDS")) 
 
@@ -137,7 +144,14 @@ ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_FINAL_5June2
 ##### Calculations for retrospecitve testing ############################################
 # Uses retrospective.function
 
+#
 RetroList_ver1RR_T <- retrospective.function(outputList = ver1_RR_T,
+                                             testYears = testYears,
+                                             testDays = testDays,
+                                             CAN_hist = CAN_hist_new,
+                                             pf = FALSE)
+
+RetroList_ver1RR_F <- retrospective.function(outputList = ver1_RR_Full,
                                              testYears = testYears,
                                              testDays = testDays,
                                              CAN_hist = CAN_hist_new,
@@ -179,6 +193,14 @@ RetroList_ver2cRR_T <- retrospective.function(outputList = ver2c_RR_T,
                                                CAN_hist = CAN_hist_new,
                                                pf = FALSE)
 
+RetroList_ver602RR_T <- retrospective.function(outputList = ver602_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               pf = FALSE)
+
+# rm(ver602_RR_T)
+
 RetroList_ver402RR_T <- retrospective.function(outputList = ver402_RR_T,
                                                testYears = testYears,
                                                testDays = testDays,
@@ -211,14 +233,16 @@ RetroList_pf_new <- retrospective.function(outputList = ver102_RR_T,
                                            endYearRetro = 2022,
                                            pf = TRUE)
 
-
 # RMSE
-
 # Extract RMSE by day into dataframe for each version and posterior median RunSize
 
 rmseDF_ver1RR_T <- data.frame("Day" = testDays,
                               "RMSE" = RetroList_ver1RR_T$RMSE_by_day_vect,
                               "Version" = "1.0")
+
+rmseDF_ver1RR_F <- data.frame("Day" = testDays,
+                              "RMSE" = RetroList_ver1RR_F$RMSE_by_day_vect,
+                              "Version" = "1.0 PSS 1995-2022")
 
 rmseDF_ver11RR_T <- data.frame("Day" = testDays,
                               "RMSE" = RetroList_ver11RR_T$RMSE_by_day_vect,
@@ -230,7 +254,7 @@ rmseDF_ver101RR_T <- data.frame("Day" = testDays,
 
 rmseDF_ver101ifRR_T <- data.frame("Day" = testDays,
                                   "RMSE" = RetroList_ver101ifRR_T$RMSE_by_day_vect,
-                                  "Version" = "1.0.1.if")
+                                  "Version" = "1.0.1.IF")
 
 rmseDF_ver102RR_T <- data.frame("Day" = testDays,
                                 "RMSE" = RetroList_ver102RR_T$RMSE_by_day_vect,
@@ -250,10 +274,14 @@ rmseDF_ver2cRR_T <- data.frame("Day" = testDays,
 
 rmseDF_ver402RR_T <- data.frame("Day" = testDays,
                             "RMSE" = RetroList_ver402RR_T$RMSE_by_day_vect,
-                             "Version" = "4.0.2")
+                             "Version" = "3.0.2")
 
 rmseDF_ver502RR_T <- data.frame("Day" = testDays,
                                 "RMSE" = RetroList_ver502RR_T$RMSE_by_day_vect,
+                                "Version" = "4.0.2")
+
+rmseDF_ver602RR_T <- data.frame("Day" = testDays,
+                                "RMSE" = RetroList_ver602RR_T$RMSE_by_day_vect,
                                 "Version" = "5.0.2")
 # 
 rmseDF_pf_new <- data.frame("Day" = testDays,
@@ -275,7 +303,8 @@ full_rmseDF <- rbind(
                      rmseDF_ver102RR_T,
                      rmseDF_ver402RR_T,
                      rmseDF_ver502RR_T,
-                     rmseDF_pf_new
+                     rmseDF_ver602RR_T
+                     # rmseDF_pf_new
                      )
 
 # Make version a factor
@@ -284,11 +313,12 @@ full_rmseDF$Version <- factor(full_rmseDF$Version, levels = c("1.0",
                                                               "2c.0",
                                                               "1.1",
                                                               "1.0.1",
-                                                              "1.0.1.if",
+                                                              "1.0.1.IF",
                                                               "1.0.2",
+                                                              "3.0.2",
                                                               "4.0.2",
-                                                              "5.0.2",
-                                                              "PF"
+                                                              "5.0.2"
+                                                              # "PF"
                                                               ))
 
 # Table for papers
@@ -328,11 +358,12 @@ ggplot(full_rmseDF, aes(x = factor(Day), y = factor(Version), fill = RMSE))+
   ))+
   theme(text = element_text(size = 14)
         )
-# Save to PDF 
-# **Uncomment out to save plots after this line to PDF
-# pdf(file = file.path(dir.output,"retro_plots_29Sept22.pdf"))
+
 # Add PF for plotting
 full_rmseDF$PF <- rmseDF_pf_new$RMSE
+
+
+# png(filename = file.path(dir.figs,"RMSE Plot 5Oct23.png"), width = 1000, height = 800)
 # RMSE plot
 ggplot(full_rmseDF, aes(x = Day, y = RMSE
                         # col = Version,
@@ -390,6 +421,92 @@ ggplot(full_rmseDF, aes(x = Day, y = RMSE
     "Aug 31"
   ))+
   geom_hline(aes(yintercept = PF, color = factor(PF)),size = 1,linetype = 2, show.legend = T)+
+  facet_wrap(~Version, ncol = 3)+
+  scale_color_discrete(labels = "Preseason Forecast",
+                       name = "")+
+  theme(legend.position = "top",
+        panel.grid.major.y  =element_line(linetype = 2, size = 0.5, 
+                                          color = "grey"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 20),
+        axis.text = element_text(angle = 90))
+
+
+# dev.off()
+
+
+# RMSE Plot comparing full vs truncated PSS data set
+
+# Combine data frames into one data.frame for plotting
+full_rmseDF_supp1 <- rbind(
+  rmseDF_ver1RR_T,
+  rmseDF_ver1RR_F
+  # rmseDF_pf_new
+)
+full_rmseDF_supp1$PF <- rmseDF_pf_new$RMSE
+# png(filename = file.path(dir.figs,"RMSE Plot 31July23.png"), width = 1000, height = 800)
+
+# RMSE plot
+ggplot(full_rmseDF_supp1, aes(x = Day, y = RMSE
+                        # col = Version,
+                        # shape= Version, 
+                        # alpha = 0.7
+))+
+  # geom_col(position = "dodge",width = 3) +
+  geom_point()+
+  geom_line()+
+  # labs(fill = "", col = "")+
+  # geom_col(data = short_rmseDF, position = "dodge", width = 3)+
+  coord_cartesian(ylim = c(
+    min(full_rmseDF$RMSE)-500,
+    max(full_rmseDF$RMSE)+500
+    # 10000,15000
+    
+  ))+
+  # scale_color_colorblind(name = "",
+  #                        labels = c("No Eagle", "Eagle Regression", "Eagle Regression Back-half","Eagle Prop Est","PF"))+
+  # # scale_colour_manual(name = "",
+  # #                     #                     # labels = c("PF","Ver 2.c", "Ver 2.c.0.1", "Ver 2.c.sd"),
+  # #                     # labels = c("PF","No Eagle", "Eagle Prop Est", "GSI No Eagle","GSI & Eagle Prop Est"),
+  # #                     labels = c("PF","Ver 1", "SST Est Prop"),
+  # #                     values = c("red","gold","green","blue", "purple")) +
+  # # scale_shape_manual(name = "",
+  # #                    labels = c("No Eagle", "Eagle Regression", "Eagle Regression Back-half","Eagle Prop Est","PF"),
+  # #                    # labels = c("PF","Ver 1", "SST Est Prop"),
+  # #                    values = c(16,17,18,19,20))+
+# # # scale_fill_manual(values = wes_palette("IsleofDogs1"),
+# #                   labels = c("PF (New; SS Recon.)",
+# #                              "PF (Old; Eagle+ Harvest)",
+# #                              "2.1 (New; SS Recon.)",
+# #                              "2.1 (Old; Eagle + Harvest)"))+
+# labels = c("Ver 1", "Ver 1-PF", "Ver 2", "Ver2-PF"))+
+guides(alpha = "none")+
+  scale_x_continuous(breaks = c(testDays), labels = c(
+    "June 2",
+    "June 7",
+    "June 12",
+    "June 17",
+    "June 22",
+    "June 27",
+    "July 2",
+    "July 7",
+    "July 12",
+    "July 17",
+    "July 22",
+    "July 27",
+    "Aug 1", #,
+    "Aug 6",
+    "Aug 11",
+    "Aug 16",
+    "Aug 21",
+    "Aug 26",
+    "Aug 31"
+  ))+
+  geom_hline(aes(yintercept = PF, color = factor(PF)),size = 1,linetype = 2, show.legend = T)+
   facet_wrap(~Version)+
   scale_color_discrete(labels = "Preseason Forecast",
                        name = "")+
@@ -401,12 +518,11 @@ ggplot(full_rmseDF, aes(x = Day, y = RMSE
         panel.border = element_rect(color = "black", fill = NA),
         plot.background = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 11),
+        text = element_text(size = 20),
         axis.text = element_text(angle = 90))
 
 
-
-
+# dev.off()
 # MAPE ####################################################################
 
 # Create MAPE dataframe
@@ -424,7 +540,7 @@ mapeDF_ver101RR_T <- data.frame("Day" = testDays,
 
 mapeDF_ver101ifRR_T <- data.frame("Day" = testDays,
                               "MAPE" = RetroList_ver101ifRR_T$MAPE_vect,
-                              "Version" = "1.0.1.if")
+                              "Version" = "1.0.1.IF")
 
 mapeDF_ver102RR_T <- data.frame("Day" = testDays,
                               "MAPE" = RetroList_ver102RR_T$MAPE_vect,
@@ -440,11 +556,15 @@ mapeDF_ver2cRR <- data.frame("Day" = testDays,
 
 mapeDF_ver402RR <- data.frame("Day" = testDays,
                               "MAPE" = RetroList_ver402RR_T$MAPE_vect,
-                              "Version" = "4.0.2")
+                              "Version" = "3.0.2")
 
 mapeDF_ver502RR <- data.frame("Day" = testDays,
                           "MAPE" = RetroList_ver502RR_T$MAPE_vect,
-                          "Version" = "5.0.2")
+                          "Version" = "4.0.2")
+
+mapeDF_ver602RR <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver602RR_T$MAPE_vect,
+                              "Version" = "5.0.2")
 
 mapeDF_PF_new <- data.frame("Day" = testDays, 
                             "MAPE" = RetroList_pf_new$MAPE_vect,
@@ -461,7 +581,8 @@ full_MAPE.df <- rbind(
                       mapeDF_ver2cRR,
                       mapeDF_ver402RR,
                       mapeDF_ver502RR,
-                      mapeDF_PF_new
+                      mapeDF_ver602RR
+                      # mapeDF_PF_new
                       )
 
 
@@ -471,11 +592,12 @@ full_MAPE.df$Version <- factor(full_MAPE.df$Version, levels = c("1.0",
                                                               "2c.0",
                                                               "1.1",
                                                               "1.0.1",
-                                                              "1.0.1.if",
+                                                              "1.0.1.IF",
                                                               "1.0.2",
+                                                              "3.0.2",
                                                               "4.0.2",
-                                                              "5.0.2",
-                                                              "PF"
+                                                              "5.0.2"
+                                                              # "PF"
 ))
 
 # MAPE Table for papers
@@ -517,6 +639,7 @@ ggplot(full_MAPE.df, aes(x = factor(Day), y = factor(Version), fill = MAPE*100))
        y = "Model Versions")+
   theme(text = element_text(size = 14))
 
+# png(file = file.path(dir.figs,"MAPE Plot 5Oct23.png"),width = 1000, height = 800)
 # MAPE plot
 ggplot(full_MAPE.df, aes(x = Day,
                          y = MAPE*100, 
@@ -530,29 +653,6 @@ ggplot(full_MAPE.df, aes(x = Day,
   geom_hline(aes(yintercept = PF*100, color = factor(PF)),size = 1,linetype = 2, show.legend = T)+
   coord_cartesian(ylim = c(min(full_MAPE.df$MAPE*100)-2,max(full_MAPE.df$MAPE*100)+2))+
   ylab('MAPE (%)')+
-  # labs(fill = "", col = "")+
-  # geom_col(data = short_rmseDF, position = "dodge", width = 3)+
-  # scale_colour_manual(name = "",
-  #                     # labels = c("PF","Ver 2.c", "Ver 2.c.0.1", "Ver 2.c.sd"),
-  #                     # labels = c("PF","No GSI", "GSI across days", "GSI by strata"),
-  #                     labels = c("PF","No Eagle", "Eagle Regress", 
-  # "Eagle Regress Back-half Season","Eagle Prop Est"),
-  #                     
-  #                     values = c("red","blue", "green", "gold", "brown")) +
-  # scale_shape_manual(name = "",
-  #                    # labels = c("PF","Ver 2.c", "Ver 2.c.0.1", "Ver 2.c.sd"),
-  #                    labels = c("PF","No Eagle", "Eagle Regress",
-# "Eagle Regress Back-half Season","Eagle Prop Est"),
-#                    
-#                    # labels = c("PF","No GSI", "GSI across days", "GSI by strata"),
-#                    values = c(15, 16, 17, 18,19))+
-# scale_fill_manual(values = wes_palette("IsleofDogs1"),
-#                   labels = c("PF (New; SS Recon.)",
-#                              "PF (Old; Eagle+ Harvest)",
-#                              "2.1 (New; SS Recon.)",
-#                              "2.1 (Old; Eagle + Harvest)"))+
-# labels = c("Ver 1", "Ver 1-PF", "Ver 2", "Ver2-PF"))+
-# scale_color_colorblind()+
 scale_x_continuous(breaks = c(testDays), labels = c(
   "June 2",
   "June 7",
@@ -574,7 +674,7 @@ scale_x_continuous(breaks = c(testDays), labels = c(
   "Aug 26",
   "Aug 31"
 ))+
-  facet_wrap(~Version)+
+  facet_wrap(~Version, ncol = 3)+
   scale_color_discrete(labels = "Preseason Forecast",
                        name = "")+
   theme(legend.position = "top",
@@ -585,10 +685,10 @@ scale_x_continuous(breaks = c(testDays), labels = c(
         panel.border = element_rect(color = "black", fill = NA),
         plot.background = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 11),
+        text = element_text(size = 20),
         axis.text = element_text(angle = 90))
 
-
+# dev.off()
 # Percent Error Box Plots
 
 PE_ver1 <- as.data.frame(RetroList_ver1RR_T$PE_mat) %>%
@@ -609,7 +709,7 @@ PE_ver101$version <- "1.0.1"
 PE_ver101if <- as.data.frame(RetroList_ver101ifRR_T$PE_mat) %>%
   pivot_longer(cols = starts_with("20"),names_to =  "Year" , values_to = "PE" ) %>%
   as.data.frame()
-PE_ver101if$version <- "1.0.1.if"
+PE_ver101if$version <- "1.0.1.IF"
 
 PE_ver102 <- as.data.frame(RetroList_ver102RR_T$PE_mat) %>%
   pivot_longer(cols = starts_with("20"),names_to =  "Year" , values_to = "PE" ) %>%
@@ -629,12 +729,17 @@ PE_ver2c$version <- "2c.0"
 PE_ver402 <- as.data.frame(RetroList_ver402RR_T$PE_mat) %>%
   pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
   as.data.frame()
-PE_ver402$version <- "4.0.2"
+PE_ver402$version <- "3.0.2"
 
 PE_ver502 <- as.data.frame(RetroList_ver502RR_T$PE_mat) %>%
   pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
   as.data.frame()
-PE_ver502$version <- "5.0.2"
+PE_ver502$version <- "4.0.2"
+
+PE_ver602 <- as.data.frame(RetroList_ver602RR_T$PE_mat) %>%
+  pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
+  as.data.frame()
+PE_ver602$version <- "5.0.2"
 
 PE_pf_new <- as.data.frame(RetroList_pf_new$PE_mat) %>% 
   pivot_longer(cols = starts_with("20"), names_to = "Year", values_to = "PE") %>%
@@ -650,7 +755,8 @@ peDF_total <- rbind(
                     PE_ver2,
                     PE_ver2c,
                     PE_ver402,
-                    PE_ver502
+                    PE_ver502,
+                    PE_ver602
   
 )
 
@@ -674,38 +780,43 @@ peDF_total$version <- factor(peDF_total$version, levels = c("1.0",
                                                               "2c.0",
                                                               "1.1",
                                                               "1.0.1",
-                                                              "1.0.1.if",
+                                                              "1.0.1.IF",
                                                               "1.0.2",
+                                                              "3.0.2",
                                                               "4.0.2",
-                                                              "5.0.2"))
-
+                                                            "5.0.2"))
+# Colors for plot
+cust.col.pe <- c("black",
+              "#E69F00",
+              "#56B4E9",
+              "#009E73",
+              "#F0E442",
+              "#0072B2",
+              "#D55E00",
+              "#CC79A7",
+              "darkgray",
+              "white",
+              "red")
 # peDF_total <- rbind(peDF_total, newDF[,c(2,4,5)])
-
+# png(file = file.path(dir.figs,"PE Plot 5Oct23.png"),width = 1000, height = 800)
 # long_df <- newDF %>% pivot_longer(cols = c(PF_new,PF_old)) %>% as.data.frame()
 ggplot(peDF_total, aes(x = Year, y = PE*100, 
                        fill =version))+
   guides(alpha = "none")+
-  geom_boxplot(alpha = .65) + 
+  geom_boxplot(alpha = .65, position = position_dodge(width = 1.01)) + 
   labs(fill = "Model Version",
        y = "Percent Error",
        x = "",
        color = "")+
   geom_point(
-             aes( x = Year, y = PF*100, col = "PF"),
+             aes( x = Year, y = PF*100, col = "PF"),fill = "red",
              shape = 21,
-             position = position_nudge(x = -.5),
+             position = position_nudge(x = -.55),
              size = 3)+
-  scale_fill_colorblind()+
+  # scale_fill_colorblind()+
+  scale_fill_manual(values = cust.col.pe)+
   # scale_color_colorblind(name = "")+
 geom_hline(yintercept  = 0, linetype = 2, color = "orange", size = 1)+
-  # theme(legend.position = "top",
-  #       panel.grid.major.y  =element_line(linetype = 2, size = .5, color = "white"),
-  #       panel.grid.major.x = element_blank(),
-  #       panel.grid.minor = element_blank(),
-  #       panel.border = element_blank(),
-  #       plot.background = element_blank(),
-  #       panel.background = element_rect(fill = "grey"),
-  #       text = element_text(size = 18))+
   theme(legend.position = "top",
         panel.grid.major.y  =element_line(linetype = 2, size = .1, 
                                           color = "grey"),
@@ -714,16 +825,24 @@ geom_hline(yintercept  = 0, linetype = 2, color = "orange", size = 1)+
         panel.border = element_rect(color = "black", fill = NA),
         plot.background = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 12),
+        text = element_text(size = 20),
         axis.text.x =   element_blank(),
         axis.ticks.x = element_blank())+
   facet_wrap(~Year, scales = "free")
 # ggtitle("New Can_hist ver 2")
-
+# dev.off()
 # CV precision of posterior ##################################
 
 # Function to calculate the CV of the 
 # posterior run size projection
+
+#' Title 
+#'CV of the posterior run size projection
+#' @param mod a model output from retrospective testing 
+#'
+#' @return a matrix with the cv of run size estimate, the year, 
+#' the day of the projection, and the model version.
+#' 
 cv.func <- function(mod){
   
   cv.mat <- matrix(nrow = length(mod), ncol = 4)
@@ -762,11 +881,24 @@ cv.df.402 <- cv.func(mod = ver402_RR_T)
 
 rm(ver402_RR_T)
 
-ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_FINAL_5June25.RDS"))
+ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_final_31Julu23.RDS"))
 
 cv.df.502 <- cv.func(mod = ver502_RR_T)
 
 rm(ver502_RR_T)
+
+# Version fitting one logistic curve to get proportions
+ver602_RR_T <- readRDS(file = file.path(dir.output,"Ver6propNull_final_27Sept23.RDS")) 
+
+cv.df.602 <- cv.func(mod = ver602_RR_T)
+
+cv.df.101if[,4] <- "1.0.1.IF"
+
+cv.df.402[,4] <- "3.0.2"
+
+cv.df.502[,4] <- "4.0.2"
+
+cv.df.602[,4] <- "5.0.2"
 
 cv.total <- rbind(
                   cv.df.10,
@@ -777,7 +909,8 @@ cv.total <- rbind(
                   cv.df.101if,
                   cv.df.102,
                   cv.df.402,
-                  cv.df.502)
+                  cv.df.502,
+                  cv.df.602)
 
 # str(cv.df.102)
 
@@ -789,13 +922,25 @@ cv.total$model <- factor(cv.total$model, levels = c("1.0",
                                                     "2.c",
                                                     "1.1",
                                                     "1.0.1",
-                                                    "1.0.1.if",
+                                                    "1.0.1.IF",
                                                     "1.0.2",
+                                                    "3.0.2",
                                                     "4.0.2",
                                                     "5.0.2"))
 
 
+# png(file = file.path(dir.figs,"CV Plot 5Oct23.png"),width = 1300, height = 800)
 
+cust.col <- c("black",
+              "#E69F00",
+              "#56B4E9",
+              "#009E73",
+              "#F0E442",
+              "#0072B2",
+              "#D55E00",
+              "#CC79A7",
+              "darkgray",
+              "purple")
 
 ggplot(cv.total, aes(x = day, y = cv*100, 
                      col = model))+
@@ -803,7 +948,8 @@ ggplot(cv.total, aes(x = day, y = cv*100,
   geom_point(size = 2)+
   labs(x = "Day",
        y = "CV (%)")+
-  scale_color_colorblind()+
+  # scale_color_colorblind()+
+  scale_color_manual(values = cust.col)+
   # facet_grid(model~year)+
   facet_wrap(~year)+
   scale_x_continuous(breaks = c(testDays), labels = c(
@@ -827,7 +973,7 @@ ggplot(cv.total, aes(x = day, y = cv*100,
     "Aug 26",
     "Aug 31"
   ))+
-  theme(legend.position = "right",
+  theme(legend.position = "top",
         panel.grid.major.y  =element_line(linetype = 2, size = .1, 
                                           color = "grey"),
         panel.grid.major.x = element_blank(),
@@ -835,11 +981,12 @@ ggplot(cv.total, aes(x = day, y = cv*100,
         panel.border = element_rect(color = "black", fill = NA),
         plot.background = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 12),
-        axis.text.x =   element_text(angle = 90)
+        text = element_text(size = 20),
+        axis.text.x =   element_text(angle = 90, size = 16)
         # axis.ticks.x = element_blank()
   )
 
+# dev.off()
 
 ggplot(cv.total, aes(x = day, y = model, fill = cv))+
   geom_tile()+
@@ -874,7 +1021,230 @@ ggplot(cv.total, aes(x = day, y = model, fill = cv))+
 # Turn off PDF save
 # dev.off()
 
-# Plots of median run size prediction over each year
+# Plots comparing PSS prediction, full run size projection and pf projection ###############################
+#
+RetroList_ver1RR_T_PSS <- retrospective.function(outputList = ver1_RR_T,
+                                             testYears = testYears,
+                                             testDays = testDays,
+                                             CAN_hist = CAN_hist_new,
+                                             param = "post_curr_predPSS",
+                                             pf = FALSE)
+
+RetroList_ver1RR_F_PSS <- retrospective.function(outputList = ver1_RR_Full,
+                                             testYears = testYears,
+                                             testDays = testDays,
+                                             CAN_hist = CAN_hist_new,
+                                             param = "post_curr_predPSS",
+                                             pf = FALSE)
+
+RetroList_ver11RR_T_PSS <- retrospective.function(outputList = ver11_RR_T,
+                                              testYears = testYears,
+                                              testDays = testDays,
+                                              CAN_hist = CAN_hist_new,
+                                              param = "post_curr_predPSS",
+                                              pf = FALSE)
+
+RetroList_ver101RR_T_PSS <- retrospective.function(outputList = ver101_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               param = "post_curr_predPSS",
+                                               pf = FALSE)
+
+RetroList_ver101ifRR_T_PSS <- retrospective.function(outputList = ver101if_RR_T,
+                                                 testYears = testYears,
+                                                 testDays = testDays,
+                                                 CAN_hist = CAN_hist_new,
+                                                 param = "post_curr_predPSS",
+                                                 pf = FALSE)
+
+RetroList_ver102RR_T_PSS <- retrospective.function(outputList = ver102_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               param = "post_curr_predPSS",
+                                               pf = FALSE)
+
+RetroList_ver2RR_T_PSS <- retrospective.function(outputList = ver2_RR_T,
+                                             testYears = testYears,
+                                             testDays = testDays,
+                                             CAN_hist = CAN_hist_new,
+                                             param = "post_curr_predPSS",
+                                             pf = FALSE)
+
+RetroList_ver2cRR_T_PSS <- retrospective.function(outputList = ver2c_RR_T,
+                                              testYears = testYears,
+                                              testDays = testDays,
+                                              CAN_hist = CAN_hist_new,
+                                              param = "post_curr_predPSS",
+                                              pf = FALSE)
+
+RetroList_ver602RR_T_PSS <- retrospective.function(outputList = ver602_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               param = "post_curr_predPSS",
+                                               pf = FALSE)
+
+# rm(ver602_RR_T)
+
+RetroList_ver402RR_T_PSS <- retrospective.function(outputList = ver402_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               param = "post_curr_predPSS",
+                                               pf = FALSE)
+# rm(ver402_RR_T)
+
+RetroList_ver502RR_T_PSS <- retrospective.function(outputList = ver502_RR_T,
+                                               testYears = testYears,
+                                               testDays = testDays,
+                                               CAN_hist = CAN_hist_new,
+                                               param = "post_curr_predPSS",
+                                               pf = FALSE)
+
+
+# Create MAPE dataframe for PSS posterior estimates
+mapeDF_ver1RR_T_PSS <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver1RR_T_PSS$MAPE_vect,
+                              "Version" = "1.0")
+
+mapeDF_ver11RR_T_PSS <- data.frame("Day" = testDays,
+                               "MAPE" = RetroList_ver11RR_T_PSS$MAPE_vect,
+                               "Version" = "1.1")
+
+mapeDF_ver101RR_T_PSS <- data.frame("Day" = testDays,
+                                "MAPE" = RetroList_ver101RR_T_PSS$MAPE_vect,
+                                "Version" = "1.0.1")
+
+mapeDF_ver101ifRR_T_PSS <- data.frame("Day" = testDays,
+                                  "MAPE" = RetroList_ver101ifRR_T_PSS$MAPE_vect,
+                                  "Version" = "1.0.1.IF")
+
+mapeDF_ver102RR_T_PSS <- data.frame("Day" = testDays,
+                                "MAPE" = RetroList_ver102RR_T_PSS$MAPE_vect,
+                                "Version" = "1.0.2")
+
+mapeDF_ver2RR_PSS <- data.frame("Day" = testDays,
+                            "MAPE" = RetroList_ver2RR_T_PSS$MAPE_vect,
+                            "Version" = "2.0")
+
+mapeDF_ver2cRR_PSS <- data.frame("Day" = testDays,
+                             "MAPE" = RetroList_ver2cRR_T_PSS$MAPE_vect,
+                             "Version" = "2c.0")
+
+mapeDF_ver402RR_PSS <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver402RR_T_PSS$MAPE_vect,
+                              "Version" = "3.0.2")
+
+mapeDF_ver502RR_PSS <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver502RR_T_PSS$MAPE_vect,
+                              "Version" = "4.0.2")
+
+mapeDF_ver602RR_PSS <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver602RR_T_PSS$MAPE_vect,
+                              "Version" = "5.0.2")
+
+mapeDF_PF_new <- data.frame("Day" = testDays, 
+                            "MAPE" = RetroList_pf_new$MAPE_vect,
+                            "Version" = "PF")
+
+# Combine into one data-frame
+full_MAPE.PSS.df <- rbind(
+  mapeDF_ver1RR_T_PSS,
+  mapeDF_ver11RR_T_PSS,
+  mapeDF_ver101RR_T_PSS,
+  mapeDF_ver101ifRR_T_PSS,
+  mapeDF_ver102RR_T_PSS,
+  mapeDF_ver2RR_PSS,
+  mapeDF_ver2cRR_PSS,
+  mapeDF_ver402RR_PSS,
+  mapeDF_ver502RR_PSS,
+  mapeDF_ver602RR_PSS
+  # mapeDF_PF_new
+)
+
+
+# Make version a factor
+full_MAPE.PSS.df$Version <- factor(full_MAPE.PSS.df$Version, levels = c("1.0",
+                                                                "2.0",
+                                                                "2c.0",
+                                                                "1.1",
+                                                                "1.0.1",
+                                                                "1.0.1.IF",
+                                                                "1.0.2",
+                                                                "3.0.2",
+                                                                "4.0.2",
+                                                                "5.0.2"
+                                                                # "PF"
+))
+
+# Add column with PSS or RunSize
+full_MAPE.df$Estimate <- "Integrated Run Size"
+
+full_MAPE.PSS.df$Estimate <- "PSS Run Size"
+
+# Join the df
+full_MAPE_comp.df <- rbind(full_MAPE.df[,-4],full_MAPE.PSS.df)
+
+
+# Add PF for plotting
+full_MAPE_comp.df$PF <- mapeDF_PF_new$MAPE
+
+# png(file = file.path(dir.figs,"MAPE Comp Plot 5Oct23.png"),width = 1000, height = 800)
+# MAPE plot
+ggplot(full_MAPE_comp.df, aes(x = Day,
+                         y = MAPE*100, 
+                         col = Estimate,
+                         # shape = Version
+))+
+  # geom_col(position = "dodge",width = 3) + 
+  
+  geom_point(size = 1.5)+
+  geom_line()+
+  geom_hline(aes(yintercept = PF*100, color = factor(PF)),size = 1,linetype = 2, show.legend = T)+
+  coord_cartesian(ylim = c(min(full_MAPE_comp.df$MAPE*100)-2,max(full_MAPE_comp.df$MAPE*100)+2))+
+  ylab('MAPE (%)')+
+  scale_x_continuous(breaks = c(testDays), labels = c(
+    "June 2",
+    "June 7",
+    "June 12",
+    "June 17",
+    "June 22",
+    "June 27",
+    "July 2",
+    "July 7",
+    "July 12",
+    "July 17",
+    "July 22",
+    "July 27",
+    "Aug 1",
+    "Aug 6",
+    "Aug 11",
+    "Aug 16",
+    "Aug 21",
+    "Aug 26",
+    "Aug 31"
+  ))+
+  facet_wrap(~Version, ncol = 3)+
+  scale_color_colorblind(labels = c("Preseason Forecast",
+                                    "Posterior Integrated Run Size", 
+                                    "Posterior PSS Prediction"),
+                       name = "")+
+  theme(legend.position = "top",
+        panel.grid.major.y  =element_line(linetype = 2, size = .5, 
+                                          color = "grey"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 20),
+        axis.text = element_text(angle = 90))
+
+# dev.off()
+
+# Plots of median run size prediction over each year ##################################################
 
 # Use the runsize_trend_func to extract median projections from models
 
@@ -919,55 +1289,86 @@ runTrend_ver402 <- runsize_trend_func(ver402_RR_T,
                                       testYears = testYears,
                                       testDays = testDays ,
                                       CAN_hist = CAN_hist_new,PF = pf_hist)
+
+runTrend_ver402$Version <- "3.0.2"
+
 rm(ver402_RR_T)
 gc()
 
-ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_FINAL_5June25.RDS"))
+ver502_RR_T <- readRDS(file = file.path(dir.output,"Ver502_rr_trunc_final_31Julu23.RDS"))
 
 runTrend_ver502 <- runsize_trend_func(ver502_RR_T,
                                       testYears = testYears,
                                       testDays = testDays ,
                                       CAN_hist = CAN_hist_new,PF = pf_hist)
+
+runTrend_ver502$Version <- "4.0.2"
+
 rm(ver502_RR_T)
 
 
 comb.df <- rbind(
-                  # runTrend_ver1,
-                  # runTrend_ver11,
-                  # runTrend_ver101,
-                  # runTrend_ver101if,
+                  runTrend_ver1,
+                  runTrend_ver2,
+                  runTrend_ver2c,
+                  runTrend_ver11,
+                  runTrend_ver101,
+                  runTrend_ver101if,
                   runTrend_ver102,
                   runTrend_ver402,
                   runTrend_ver502
 )
 
+comb.df$Version <- factor(comb.df$Version, levels = c("1.0",
+                                                     "2.0",
+                                                     "2.c",
+                                                     "1.1",
+                                                     "1.0.1",
+                                                     "1.0.1.if",
+                                                     "1.0.2",
+                                                     "3.0.2",
+                                                     "4.0.2"))
 
 # Plot the error
 comb.df$error <- comb.df$RunSize - comb.df$can.mean
 
+# Custom colors for run trend plots
+cust.col2 <- c("black",
+              "#E69F00",
+              "#56B4E9",
+              "#009E73",
+              "#F0E442",
+              "#0072B2",
+              "#D55E00",
+              "#CC79A7",
+              "darkgray",
+              "red")
+
+# Plot of median run size predictions across days for each year
 ggplot(comb.df, aes(x = Day, 
-                    y = error/1000,
+                    y = RunSize/1000,
                     color = Version
                     
 ))+
-  geom_line(size = 1.5, show.legend = T)+
+  geom_line(size = 1.5, show.legend = T, alpha = 0.75)+
   # geom_line( aes(x = Day, y = PSSpred/1000, color = "PSS Pred" ))+
   # geom_line(data = PSSpred_DF_mult, aes(x = Day, y = PSSpred/1000, color = "PSS Pred 2x"))+
   # geom_line(data = RunSize_DF_mult, aes(x = Day, y = RunSize/1000, color = "RunSize 2x"))+
-  geom_hline(aes(yintercept = 0 , col = "Truth"), size = 1, linetype = 2)+
+  geom_hline(aes(yintercept = can.mean/1000 , col = "Truth"), size = 1, linetype = 2)+
   facet_wrap(~Year ,
              nrow = 4,
-             # scales = "free_y"
+             scales = "free_y"
   )+
   theme(legend.position = "top")+
   labs(color = "", alpha = "")+
-  ylab("Predicted - Observed (1000's Chinook)")+
+  ylab("Candadian-origin Chinook Salmon (1000s)")+
   # scale_color_colorblind(name = "",
   #                        labels = c(
   #                                   "PSS Only ",
   #                                   "PSS and Eagle",
   #                                   "EOS Run Size"))+
-  scale_color_colorblind()+
+  # scale_color_colorblind()+
+  scale_color_manual(values = cust.col2)+
   scale_x_continuous(breaks = c(153,173,193,213,232), labels = c(
     "June 2",
     
@@ -998,6 +1399,58 @@ theme(legend.position = "right",
       # axis.ticks.x = element_blank()
       )
 
+# Plot the erverror
+ggplot(comb.df, aes(x = Day, 
+                    y = (error/1000),
+                    color = Version
+                    
+))+
+  geom_line(size = 1.5, show.legend = T, alpha = 0.5)+
+  geom_hline(aes(yintercept = 0 , col = "Truth"), size = 1, linetype = 2)+
+  facet_wrap(~Year ,
+             nrow = 4,
+             scales = "free_y"
+  )+
+  theme(legend.position = "top")+
+  labs(color = "", alpha = "")+
+  ylab("Predicted-Observed (1000s)")+
+  # scale_color_colorblind(name = "",
+  #                        labels = c(
+  #                                   "PSS Only ",
+  #                                   "PSS and Eagle",
+  #                                   "EOS Run Size"))+
+  # scale_color_colorblind()+
+  
+  scale_color_manual(values = cust.col2)+
+  scale_x_continuous(breaks = c(153,173,193,213,232), labels = c(
+    "June 2",
+    
+    # "June 12",
+    
+    "June 22",
+    
+    # "July 2",
+    
+    "July 12",
+    
+    # "July 22",
+    
+    "Aug 1",
+    
+    "Aug 20"))+
+  
+  theme(legend.position = "right",
+        panel.grid.major.y  =element_line(linetype = 2, size = .1, 
+                                          color = "grey"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 12),
+        axis.text.x =   element_text(angle = 90),
+        # axis.ticks.x = element_blank()
+  )
 
 
 # Parameter Interval Analysis #######################################################
@@ -1019,13 +1472,13 @@ interval_function <- function(mod, parameter = "", testDays, year = "", counter)
   quant.xx <- apply(X = xx.mat, 
                     MARGIN = 2, 
                     FUN = quantile, 
-                    probs=c(0.025, 0.25, 0.5, 0.75, 0.975),)
+                    probs=c(0.025, 0.1,0.25,0.5, 0.75,0.9, 0.975),)
   
   pred.xx.df <- data.frame(testDays,
                            t(quant.xx))
   
-  names(pred.xx.df) <- c("day","low95","low50","median",
-                         "up50","up95")
+  names(pred.xx.df) <- c("day","low95","low80","low50","median",
+                         "up50","up80","up95")
   
   pred.xx.df$Year <- year
   
@@ -1036,16 +1489,19 @@ interval_function <- function(mod, parameter = "", testDays, year = "", counter)
 
 ###################################################
 
-# Sigma from regression fitting
+
 # Loop through years to calculate intervals for each year and day
+# for run size
+
+# ver 1.0.2
 years <- c(testYears)
 n.years <- length(years)
 count <- 0
 for (y in 1:n.years) {
   # y = 2
   year <- years[y]
-  df <-interval_function(mod = ver502_RR_T, 
-                         parameter = "sigma_predPSS", # Parameter of interest
+  df <-interval_function(mod = ver102_RR_T, 
+                         parameter = "RunSize", # Parameter of interest
                          testDays = testDays,
                          year = year,
                          counter = count)
@@ -1058,24 +1514,52 @@ for (y in 1:n.years) {
   count <- count+ length(testDays)
 }
 
+final.df.102 <- left_join(final.df,CAN_hist_new)
+final.df.102$version <- "1.0.2"
+
+# ver 4.0.2
+years <- c(testYears)
+n.years <- length(years)
+count <- 0
+for (y in 1:n.years) {
+  # y = 2
+  year <- years[y]
+  df <-interval_function(mod = ver402_RR_T, 
+                         parameter = "RunSize", # Parameter of interest
+                         testDays = testDays,
+                         year = year,
+                         counter = count)
+  if(y == 1){
+    final.df <- df}else{
+      
+      final.df <- rbind(final.df,df)
+      
+    }
+  count <- count+ length(testDays)
+}
+
+final.df.402 <- left_join(final.df,CAN_hist_new)
+final.df.402$version <- "4.0.2"
+
+
+master.df <- rbind(final.df.102, final.df.402)
 
 # Sigma from PSS regression################
 
-ggplot(final.df, aes(x = day, y = median))+
+ggplot(master.df, aes(x = day, y = median/1000))+
   # geom_ribbon(aes(ymin = median-0.003, ymax = median+0.003, fill = "Median")) +
-  geom_line(aes(x = day, y = median))+
-  # geom_point(aes(
-  #   col = param),
-  #   size = 2, 
-  #   show.legend = T)+
-  geom_ribbon(aes(ymin=low95, ymax=up95, fill = "HDI 95"), alpha = .2,
+  geom_line(aes(x = day, y = median/1000))+
+  geom_ribbon(aes(ymin=low80/1000, ymax=up80/1000, fill = "HDI 80"), alpha = .5,
               show.legend = T) +
-  geom_ribbon(aes(ymin=low50,
-                  ymax=up50, fill = "HDI 50"), alpha = .5) +
-  facet_wrap(~Year)+
+  geom_ribbon(aes(ymin=low50/1000,
+                  ymax=up50/1000, fill = "HDI 50"), alpha = .5) +
+  geom_hline(aes(yintercept = can.mean/1000, col = "Realized Run Size"), linetype = 2)+
+  # facet_wrap(~Year, scales = "free_y")+
+  facet_grid(version~Year)+
   labs(x = "Day",
-       y = bquote(sigma^2),
-       fill = ""
+       y = "Run Size (1000s Chinook Salmon)",
+       fill = "",
+       col = ""
        # title = "4.0.2"
        )+
   scale_x_continuous(breaks = c(152,162,172,182,192,202),
@@ -1087,10 +1571,21 @@ ggplot(final.df, aes(x = day, y = median))+
                                 "July-22"))+
   scale_fill_colorblind()+
   coord_cartesian(xlim = c(152,210))+
-  theme_light(base_size = 15)+
-  theme(axis.title    = element_text(size = 15),
-        legend.text = element_text(size = 12),
-        axis.text.x = element_text(angle = 90))
+  # theme_minimal(base_size = 15)+
+  # theme(axis.title    = element_text(size = 15),
+  #       legend.text = element_text(size = 12),
+  #       axis.text.x = element_text(angle = 90),
+  #       legend.position = "top")
+  theme(legend.position = "top",
+        # panel.grid.major.y  =element_line(linetype = 2, size = .1, 
+        #                                   color = "grey"),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(color = "black", fill = NA),
+        plot.background = element_blank(),
+        panel.background = element_blank(),
+        text = element_text(size = 18),
+        axis.text.x =   element_text(angle = 90, size = 16))
 
 
 # Rhat and Neff

@@ -108,17 +108,17 @@ normal.all <- read.csv(file = file.path(dir.output,"normal curve parameters All 
 # This is where users can input dates, stan model, and stan model controls.
 
 # Model Version
-model.version <- "6.prop"
+model.version <- "4.0.2"
 
 # Range of years 1995 to current year
-myYear <- 2017
+myYear <- 2023
 
 # Range of days 152 -243
-myDay <- 175
+myDay <- 153
 
 # MCMC Parameters
 n.chains <- 4 # Number of chains to run
-n.iter <- 2000;#5e4 # Number of iterations to run
+n.iter <- 5000;#5e4 # Number of iterations to run
 n.thin <- 2 # How many iterations to thin
 
 # Start Years for Predictors
@@ -594,6 +594,8 @@ yearSST <- norton.sst$year[norton.sst$month == 5 &
                                    # norton.sst$year >= startYearPSS &
                                    norton.sst$year != myYear]
 
+names(may.sst.hist) <- yearSST
+
 n_yearSST <- length(yearSST)
 
 may.sst.curr <-norton.sst$month.mean[norton.sst$month == 5 &
@@ -664,17 +666,18 @@ n_ps_alpha_log <- length(ps_alpha.log)
 
 # 
 # inits <- function(){
-#   list( alpha = runif(1,0,5),
-#         beta = runif(1,0,5),
+#   list(
 #         sigma = runif(1,0,2),
-#         ln_phi = runif(1,-1,1),
-#         propCAN_logit = runif(n_dayPSS,0,1),
-#         mid = runif(1,174,176),
-#         shape = runif(1, 4,6),
-#         scale = runif(1,140000,160000),
-#         alpha_sst = runif(1,1,2),
-#         beta_sst = runif(1,-2,-1),
-#         phi = runif(1,1,50)
+#         alpha = runif(1,150000,200000),
+#         beta = runif(1,0,0.5)
+#         # ln_phi = runif(1,-1,1),
+#         # propCAN_logit = runif(n_dayPSS,0,1),
+#         # mid = runif(1,174,176),
+#         # shape = runif(1, 4,6),
+#         # scale = runif(1,140000,160000),
+#         # alpha_sst = runif(1,1,2),
+#         # beta_sst = runif(1,-2,-1),
+#         # phi = runif(1,1,50)
 # 
 #   )
 #   }
@@ -682,10 +685,11 @@ n_ps_alpha_log <- length(ps_alpha.log)
 # Inits with small range; alpha is 1e5-1.1e5
 inits<-  function(){
   list(
-    "ps_alpha_curr" = runif(1,1e5,11e4),
+    # "ps_alpha_curr" = runif(1,15e3,17e3),
+    "ps_alpha_curr" = runif(1,10e4,11e4),
     "ps_mu_curr" = runif(1,172,175),
     "ps_sd_curr" = runif(1,5,7),
-    "ps_alpha_hist" = runif(n_yearPSS,1e5,11e4),
+    "ps_alpha_hist" = runif(n_yearPSS,10e4,11e4),
     "ps_mu_hist" = runif(n_yearPSS,172,175),
     "ps_sd_hist" = runif(n_yearPSS,5,7),
     "sigma" = runif(1,2,3),
@@ -695,9 +699,9 @@ inits<-  function(){
     "alpha" = runif(1,10,11),
     "beta_sst" = runif(1,-2,-1),
     "sigma_t" = runif(1,2.5,3),
-    "alpha_t" = runif(1,177,178),
-    "beta_sst" = runif(1,-2,0),
-    "alpha_t" = runif(1,170,180)
+    "alpha_sst" = runif(1,177,178)
+    # "beta_sst" = runif(1,-2,0),
+    # "alpha_t" = runif(1,170,180)
 
 
   )
@@ -813,11 +817,12 @@ fit <- stan(file = file.path(dir.stan,paste("Yukon Inseason Forecast ",
             thin = n.thin, 
             # cores = n.chains,
             cores = mc.cores,
-            control = list(max_treedepth = 25, adapt_delta = 0.99),
+            # control = list(max_treedepth = 25, adapt_delta = 0.99),
             verbose = F,
             save_warmup = T
             
 )
+
 
 # Figures Section #####################################################
 
@@ -826,6 +831,10 @@ traceplot(object = fit, c(
                          "alpha",
                           "beta",
                           "sigma",
+                         # "ps_alpha_curr",
+                         # "ps_mu_curr",
+                         # "beta_sst",
+                         # "alpha_sst",
                           # "sigma_predPSS",
                          # "sigma_reg",
                           # "predPSS",
@@ -1048,6 +1057,53 @@ points(x = apply(pars$cum_predicted_histPSS, 2, median)/1000,y = totalEOS/1000)
 
 dim(pars$cum_predicted_histPSS)
 
+# SST interaction PSS plot #########################################################
+
+int.cum <- cumPSS*may.sst.hist[loc.devMP.allYears]
+# Get order of cumPSS for polygon below
+ord <- order(int.cum)
+
+plot(x = int.cum/1000, y = totalEOS/1000,
+     type = "p",
+     pch = 21,
+     bg = "red",
+     xlab = expression(Sigma ~ PSS[D] ~("1000's"~ Chinook ~Salmon)),
+     ylab = "Total EOS Canadian Chinook Salmom (1000's)",
+     # main = paste("Predicted PSS Fit","1995 to", 
+     # myYear-1,"\n Day 152 to",
+     # myDay,"\n Model Version",model.version),
+     # xlim = c(0,(max(int.cum))/1000),
+     # ylim = c(min(quant.predPSS/1000), max(quant.predPSS/1000)+30),
+     # ylim = c(0,max(quant.predPSS[5,]/1000)),
+     # ylim = c(0, (max(totalEOS)/1000)+10),
+     cex.axis = 1.5,
+     cex.lab = 1.5)
+polygon(x = c(int.cum[ord]/1000, rev(int.cum[ord]/1000)),
+        y = c(quant.predPSS[1,ord]/1000,rev(quant.predPSS[5,ord]/1000)),
+        col=rgb(1,0,0, alpha=0.2), border=FALSE)
+polygon(x = c(int.cum[ord]/1000, rev(int.cum[ord]/1000)),
+        y = c(quant.predPSS[2,ord]/1000,rev(quant.predPSS[4,ord]/1000)),
+        col=rgb(1,0,0, alpha=0.2), border=FALSE)
+lines(x = int.cum[ord]/1000, quant.predPSS[3,ord]/1000, col = "red", lw = 2)
+points(x = pars$cum_predicted_histPSS[1,]/1000, y = totalEOS/1000, cex = 3)
+
+# Add years to plot
+text(x = int.cum/1000, y = (totalEOS/1000)+8, labels = yearPSS)
+points(x = sum(PSS_hist$count[PSS_hist$Day <= myDay &
+                                PSS_hist$Year == myYear])/1000, 
+       y = CAN_hist$can.mean[CAN_hist$Year == myYear]/1000,
+       cex = 3,
+       lwd = 5,
+       col = "Blue",
+       pch = 23,
+       bg = "red"
+)
+text(x = sum(PSS_hist$count[PSS_hist$Day <= myDay &
+                              PSS_hist$Year == myYear])/1000, 
+     y = (CAN_hist$can.mean[CAN_hist$Year == myYear]/1000)+10,
+     labels = myYear,
+     col = "Blue",
+     cex = 2)
 # Eagle regression plot ######################################################
 
 # Get the quantiles for predPSS from model output
@@ -1103,7 +1159,7 @@ abline(0,1, lty = 2, lwd = 5)
 
 median(pars$curr_predEagle)
 
-# Midpoint regression
+# Midpoint regression #############################################3
 
 # Get the quantiles for predPSS from model output
 quant.predMid <- apply(X = pars$predMP, 
@@ -1137,6 +1193,55 @@ polygon(x = c(may.sst.hist[ord], rev(may.sst.hist[ord])),
         y = c(quant.predMid[2,ord],rev(quant.predMid[4,ord])),
         col=rgb(1,0,0, alpha=0.2), border=FALSE)
 lines(x = may.sst.hist[ord], quant.predMid[3,ord], col = "red", lw = 2)
+text(x = may.sst.hist, y = deviations.mp + 0.5, labels = yearSST, cex = .75)
+points(x = may.sst.curr,
+       y = logistic.all$mid[logistic.all$year==myYear]-log_mid ,
+       cex = 3,
+       lwd = 5,
+       col = "Blue",
+       pch = 23,
+       bg = "red"
+)
+text(x = may.sst.curr, 
+     y = logistic.all$mid[logistic.all$year==myYear]-log_mid +1,
+     labels = myYear,
+     cex = 2,
+     col = "blue")
+
+# Midpoint Deviations regression #############################################3
+
+# Get the quantiles for predPSS from model output
+quant.predDev <- apply(X = pars$dev_predMP, 
+                       MARGIN = 2, 
+                       FUN = quantile, 
+                       probs=c(0.025, 0.25, 0.5, 0.75, 0.975))
+
+
+# Get order of cumPSS for polygon below
+ord <- order(may.sst.hist)
+
+# Regression plot for Eagle Sonar
+plot(x = may.sst.hist, y = deviations.mp,
+     type = "p",
+     pch = 21,
+     bg = "red",
+     xlab = "SST (c)",
+     ylab = "Midpoint Deviations from Mean",
+     # main = paste("Predicted PSS Fit","1995 to", 
+     # myYear-1,"\n Day 152 to",
+     # myDay,"\n Model Version",model.version),
+     # ylim = c(-6,max(quant.predMid)),
+     # ylim = c(min(quant.predEagle/1000)-10, max(quant.predEagle/1000)+10),
+     # ylim = c(0,150),
+     cex.axis = 1.5,
+     cex.lab = 1.5)
+polygon(x = c(may.sst.hist[ord], rev(may.sst.hist[ord])),
+        y = c(quant.predDev[1,ord],rev(quant.predDev[5,ord])),
+        col=rgb(1,0,0, alpha=0.2), border=FALSE)
+polygon(x = c(may.sst.hist[ord], rev(may.sst.hist[ord])),
+        y = c(quant.predDev[2,ord],rev(quant.predDev[4,ord])),
+        col=rgb(1,0,0, alpha=0.2), border=FALSE)
+lines(x = may.sst.hist[ord], quant.predDev[3,ord], col = "red", lw = 2)
 text(x = may.sst.hist, y = deviations.mp + 0.5, labels = yearSST, cex = .75)
 points(x = may.sst.curr,
        y = logistic.all$mid[logistic.all$year==myYear]-log_mid ,
@@ -1210,7 +1315,7 @@ masterDF <- rbind(masterDF, pred.plot.df)
 
 
 # Plot results
-ggplot(masterDF, aes(x = Days,  y = count/1000))+
+ggplot(masterDF[masterDF$Year==2023,], aes(x = Days,  y = count/1000))+
   geom_point(aes(color = Obs)) +
   # geom_col(alpha = .3)+
   geom_ribbon(aes(ymin=low95/1000, ymax=up95/1000,fill = "HDI 95"), alpha=0.3) +
@@ -1229,7 +1334,7 @@ ggplot(masterDF, aes(x = Days,  y = count/1000))+
   
   scale_fill_colorblind(name = "")+
   scale_color_colorblind(name = "")+
-  facet_wrap(~Year, nrow = 6)
+  facet_wrap(~Year, nrow = 6, scales = "free_y")
 
 
 # Logistic Curve  model fit ##########################
@@ -1338,11 +1443,11 @@ ggplot(df.comb, aes(x = value/1000, fill = par))+
   geom_density(alpha = .5)+
   ggtitle(paste("Density plot for",myYear,", day",myDay,"\n Version", model.version))+
   theme_classic()+
-  geom_vline(aes(xintercept = CAN_hist$can.mean[CAN_hist$Year == myYear]/1000,
-                 color = "End of Season Runsize"),
-             linetype = 2,
-             size = 1)+
-  geom_vline(aes(xintercept  = pf_hist$mean[pf_hist$Year == myYear]/1000))+
+  # geom_vline(aes(xintercept = CAN_hist$can.mean[CAN_hist$Year == myYear]/1000,
+  #                color = "End of Season Runsize"),
+  #            linetype = 2,
+  #            size = 1)+
+  geom_vline(aes(xintercept  = mean(pars$RunSize)/1000))+
   
   # xlim(c(0,300000))+
   coord_cartesian(xlim = c(0,200))+

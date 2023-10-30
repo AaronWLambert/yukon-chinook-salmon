@@ -11,7 +11,7 @@
 
 
 library(bbmle)
-# library(mvtnorm)
+library(ggpubr)
 library(tidyverse)
 library(rstan)
 library(bayesplot)
@@ -307,10 +307,10 @@ em_wind$v.wind <- -1*em_wind$sknt*cos(2*pi*em_wind$drct/360)
 years <- unique(em_wind$year)
  
 # matrix to hold avg wind
-wind.df <- matrix(ncol = 5,
+wind.df <- matrix(ncol = 7,
                   nrow = length(years))
 
-colnames(wind.df) <- c("year","month", "avg.wd", "vect.avg.ws", "scalar.avg.ws")
+colnames(wind.df) <- c("year","month", "avg.wd", "vect.avg.ws", "scalar.avg.ws", "mean.u", "mean.v")
 
 # month <- 5
 
@@ -359,6 +359,9 @@ for (m in c(3:6)) {
   
   wind.df[y,5] <- w.scalar.avg
   
+  wind.df[y,6] <- mean.u
+  
+  wind.df[y,7] <- mean.v
   
 
   }
@@ -424,18 +427,136 @@ ggplot(full_windDF, aes(x = avg.wd, y = scalar.avg.ws , fill = timing))+
   facet_wrap(~month)+
   labs(x = "Wind Direction",
        y = "Scalar Avg Wind Speed knts",
-       fill = "Timing")
+       fill = "Timing")+
   theme(text = element_text(size = 18))
 
 
 
-test <- full_windDF %>% drop_na() %>% subset(month == 4) %>% as.data.frame()
+test <- full_windDF %>% drop_na() %>% subset(month == 5) %>% as.data.frame()
 
 cor(test$mid, test$avg.wd)
 
+ggplot(test, aes(x = avg.wd, y = mid))+
+  geom_point()+
+  geom_smooth()
+
+cor(test$mid, test$vect.avg.ws)
+
+cor(test$mid, test$scalar.avg.ws)
+
+cor(test$mid, test$mean.u)
+
+ggplot(test, aes(x = mean.u, y = mid))+
+  geom_point()+
+  geom_smooth(method = "lm")+  
+  stat_cor(aes(label = after_stat(rr.label)), label.y = 181)
+
+cor(test$mid, test$mean.v)
+
+ggplot(test, aes(x = mean.v, y = mid))+
+  geom_point()+
+  geom_smooth(method = "lm")+
+  stat_cor(aes(label = after_stat(rr.label)))
+
+
+# Polynomial model fitting avg.wd and midpoint
+fit <- lm(test$mid~test$avg.wd + I(test$avg.wd^2))
+
+summary(fit)
+
+x <- seq(0,360,by = 1)
+f.plot <- coef(fit)[1] + coef(fit)[2]*x + coef(fit)[3]*x^2
+
+plot(f.plot~x,
+     ylim = c(166,183), 
+     type = "l",
+     xlab = "Avg Wind Direction",
+     ylab = "Mid Point",
+     col = "red",
+     lty = 2)
+points(x = test$avg.wd, y = test$mid)
+
+# Wind speed by mid point
+fit.ws <- lm(test$mid~test$scalar.avg.ws)
+
+summary(fit.ws)
+
+xx <- seq(6.5,10,by = 0.25)
+f.plot.ws <- coef(fit.ws)[1] + coef(fit.ws)[2]*xx 
+
+plot(f.plot.ws~xx,
+     ylim = c(165,185),
+     # xlim = c(0,9),
+     type = "l",
+     # xlab = "Avg Wind Direction",
+     # ylab = "Mid Point",
+     col = "red",
+     lty = 2)
+points(x = test$scalar.avg.ws, y = test$mid)
 
 
 
+
+library(mgcv)
+
+# Simulate  the curve for fitting
+sim.parabola <- function(wind, a, h, k){
+  
+  pred <-  a*(wind-h)^2+k
+  
+  return(pred)
+  
+}
+
+# Negative log-likelihood function for mle2
+NLL_logistic <- function(a, h, k, obs.mid, sigma){
+
+  # sigma <- exp(ln_sigma)
+  
+  pred <- sim.parabola(wind = wind,
+                         a = a,
+                         h = h,
+                         k = k)
+  
+  ll <- dnorm(x = obs.mid, mean = pred, sd = sigma, log = F)
+  
+  nll <- -1*sum(ll)
+  
+  return(nll)
+}
+
+
+# pred <- sim.parabola(wind = x, a = .0005, h = 200, k = 165)
+# 
+# 
+# plot(x = test$avg.wd, y = test$mid,
+#      ylim = c(165,182))
+# lines(x = x, y = pred)
+
+
+# Use mle2 to fit a line 
+fit.parabola <- mle2(NLL_logistic,
+                        start = list(
+                          a = 0.0005,
+                          k = 165,
+                          h = 200,
+                          sigma = 5
+                        ),
+                        data = list(wind = test$avg.wd,
+                                    obs.mid = test$mid),
+                        optimizer = "nlminb",
+                        method = "Nelder-Mead",
+                        control = list(maxit = 1e6))
+
+# Get line prediction for plotting the results
+pred.mid <- sim.parabola(wind = seq(from = 0, to = 360, by = 1), 
+                          a = (coef(fit.parabola)[1]),
+                          h = (coef(fit.parabola)[2]),
+                         k = (coef(fit.parabola)[3]))
+
+plot(x = test$avg.wd, y = test$mid,
+     ylim = c(160,200))
+lines(x = x, y = pred.mid)
 
 
 

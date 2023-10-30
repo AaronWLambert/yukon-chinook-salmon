@@ -1,8 +1,12 @@
 {
-    "path": "C:/Users/aaron/Desktop/Yukon Kings/Inseason Forcast Model/R",
+    "path": "C:/Users/aaron/OneDrive/Desktop/Yukon Kings/Inseason Forcast Model",
     "sortOrder": [
         {
             "columnIndex": 4,
+            "ascending": false
+        },
+        {
+            "columnIndex": 3,
             "ascending": false
         },
         {

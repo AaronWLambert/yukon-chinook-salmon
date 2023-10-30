@@ -20,11 +20,34 @@
 
 # Function for MAPE, PE, RMSE, and other things listed in the function description
 
+#' Title
+#'
+#' @param outputList Model output list from retrospective testing
+#' @param testYears Years included in the retrospective testing
+#' @param testDays Days included in retrospective testing
+#' @param CAN_hist A data.frame of Yukon River Canadian-origin Chinook salmon reconstructed counts
+#' @param pf_hist A data.frame of preseason forecast point estimates for years 2007-2022
+#' @param param The parameter of interest. Default is RunSize, the posterior integrated run size estimate
+#' @param startYearRetro Year retrospective testing begins. Default 2007
+#' @param endYearRetro Year retrospective testing ends. Default is 2022
+#' @param pf True or False that the retrospective testing is for the preseason forecast.
+#'
+#' @return Returns a list of consisting of: a matrix of the median of the parameter of interest. 
+#' A matrix of observed run sizes. A matrix of percent error. A matrix of absolute perecent error.
+#' A vector of MAPE calculated across years for each day tested.
+#' A vector of RMSE calculated across years for each day tested.
+#' 3 Matrices indicating if the true runsize was observed in the 95, 80, and 50 CI.
+#' A vector of testdays used.
+#' A vector of years included in retrospective testing.
+#' @export
+#'
+#' @examples
 retrospective.function<- function(outputList, 
                                   testYears, 
                                   testDays, 
                                   CAN_hist,
                                   pf_hist,
+                                  param = "RunSize",
                                   startYearRetro = 2007,
                                   endYearRetro = 2022,
                                   pf = FALSE){
@@ -76,7 +99,7 @@ retrospective.function<- function(outputList,
       y1<-testYears[y]
       d1<-testDays[d]
       
-      median_mat[d,y]<- median(outputList[[paste(y1,"_",d1,sep = "")]]$pars$RunSize)
+      median_mat[d,y]<- median(outputList[[paste(y1,"_",d1,sep = "")]]$pars[[param]])
       
       # print(d)
       # print(y)

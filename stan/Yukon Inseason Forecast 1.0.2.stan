@@ -18,7 +18,7 @@ data {
   int <lower=0> n_yearsPF;
   
 
-  // EOS Canadian counts by year up to myyear -1
+  // EOS Canadian counts 
   int <lower=0>n_totalEOS ;
   vector<lower=0> [n_totalEOS]totalEOS;
   
@@ -26,7 +26,7 @@ data {
   int<lower=0> n_dayPSS ;
   int<lower=0> dayPSS[n_dayPSS];
   
-  // Historic PSS years up to myYear -1
+  // Historic PSS years 
   int<lower=0> n_yearPSS;
   int <lower=0>yearPSS[n_yearPSS];
   
@@ -38,7 +38,7 @@ data {
   int <lower=0> n_curr_PSS;
   real <lower=0> curr_PSS[n_curr_PSS];
   
-    // Historic PSS years up to myYear -1
+    // Historic PSS years 
   int<lower=0> n_yearEagle;
   
   // Matrix of historic counts by days & years
@@ -78,13 +78,13 @@ parameters {
 
 transformed parameters{
   
-   //Empty vector for cum sum of counts for each year to myyear -1
+   //Empty vector for cum sum of counts for each year 
   real cumHistPSS[n_yearPSS];
   
   // Empty vector for predicted PSS counts in transformed parameters
   vector [n_yearPSS]predPSS;
   
-  //Empty vector for cum sum of counts for each year to myyear -1
+  //Empty vector for cum sum of counts for each year 
   vector [n_yearEagle]cumHistEagle;
   
   // Empty vector for predicted PSS counts in transformed parameters

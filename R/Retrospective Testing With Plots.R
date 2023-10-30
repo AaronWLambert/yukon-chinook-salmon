@@ -18,6 +18,7 @@
 #
 # 
 # Next steps: 
+
 # 
 #
 #=================================================================================
@@ -99,10 +100,14 @@ normal.all <- read.csv(file = file.path(dir.output,"normal curve parameters All 
 # normal.CAN <- read.csv(file = file.path(dir.output,"normal curve parameters CAN Chinook 1995_2022.csv"))
 
 # SST May data
-norton.sst <- readRDS(file = file.path(dir.data,"norton.sst 6Apr23.RDS"))
+# norton.sst <- readRDS(file = file.path(dir.data,"norton.sst 6Apr23.RDS"))
+norton.sst <- readRDS(file = file.path(dir.data,"SST Point -164875_62625 2000_2022.RDS"))
+
+# Emmonak April air temp
+Emmonak_Air_Temp <- readRDS(file = file.path(dir.data,"Emmonak Air Interpolated 2020 10Aug23.RDS"))
 
 # Control Section ######################
-model.version <- "6.prop"
+model.version <- "6.prop.null"
 # Range of years $$$$ to 2021
 # myYear <- 2019
 
@@ -111,7 +116,7 @@ model.version <- "6.prop"
 
 # MCMC Parameters
 n.chains <- 4
-n.iter <- 2000 #30000;#5e4
+n.iter <- 5000 #30000;#5e4
 n.thin <- 2
 
 # Days to use in retrospective testing runs ##############
@@ -127,7 +132,7 @@ testDays <- seq(from = 153, to = 243, by = 5)
 
 # Years included in full run (Used for retro with Eagle+Harvest Can-orig counts)
 testYears <- c(2007:2022)
-# testYears <- 2020
+# testYears <- 2023
 
 # Test Years used in retros for models only using recent PSS passage
 # testYears_short <- c(2009:2010,2013:2021)
@@ -180,7 +185,8 @@ for(y in c(testYears)){
                                                                   pf_hist = pf_hist,
                                                                   PSS_hist = PSS_hist,
                                                                   PSS_sd = PSS_sd,
-                                                                  norton.sst = norton.sst,
+                                                                  norton.sst = norton.sst, 
+                                                                  Emmonak_Air_Temp = Emmonak_Air_Temp,
                                                                   n.thin = n.thin,
                                                                   n.iter = n.iter,
                                                                   GSI_by_year = GSI_by_year,
@@ -202,7 +208,7 @@ for(y in c(testYears)){
 # Save or read in outputlist #######################################
 
 # Save output
-saveRDS(object = outputList, file = file.path(dir.output, "Ver6prop_rr_trunc_17July23.RDS"))
+saveRDS(object = outputList, file = file.path(dir.output, "Ver6propNull_final_27Sept23.RDS"))
 
 # Read in outputs from retro testing 
 # **Note** Increase memory limit if using versions 4 and higher
@@ -215,19 +221,25 @@ saveRDS(object = outputList, file = file.path(dir.output, "Ver6prop_rr_trunc_17J
 
 # outputlist_ver1_T <- readRDS(file = file.path(dir.output,"Ver1_oldCAN_trunc_long_3May23.RDS"))
 
-outputlist_ver1RR_T <- readRDS(file = file.path(dir.output, "Ver1_RRCAN_trunc_long_3May23.RDS"))
+# outputlist_ver1RR_T <- readRDS(file = file.path(dir.output, "Ver1_rr_trunc_FINAL_5June23.RDS"))
 
-outputlist_ver11RR_T <- readRDS(file = file.path(dir.output, "Ver11_rr_trunc_long_5May23.RDS"))
+outputlist_ver6propRR_T <- readRDS(file = file.path(dir.output, "Ver6prop2_rr_trunc_7Aug23.RDS"))
 
-outputlist_ver101RR_T <- readRDS(file = file.path(dir.output, "Ver101_rr_trunc_long_5May23.RDS"))
+outputlist_ver1sstRR_T <- readRDS(file = file.path(dir.output, "Ver1sst_rr_trunc_2Aug23.RDS"))
 
-outputlist_ver101ifRR_T <- readRDS(file = file.path(dir.output, "Ver101if_rr_trunc_long_5May23.RDS"))
+outputlist_ver6402RR_T <- readRDS(file = file.path(dir.output, "Ver6402_rr_trunc_2Aug23.RDS"))
 
+# outputlist_ver11RR_T <- readRDS(file = file.path(dir.output, "Ver11_rr_trunc_long_5May23.RDS"))
+# 
+# outputlist_ver101RR_T <- readRDS(file = file.path(dir.output, "Ver101_rr_trunc_long_5May23.RDS"))
+# 
+# outputlist_ver101ifRR_T <- readRDS(file = file.path(dir.output, "Ver101if_rr_trunc_long_5May23.RDS"))
+# 
 outputlist_ver102RR_T <- readRDS(file = file.path(dir.output, "Ver102_rr_trunc_long_5May23.RDS"))
-
-outputlist_ver112RR_T <- readRDS(file = file.path(dir.output, "Ver112_rr_trunc_long_5May23.RDS"))
-
-outputlist_ver6RR_T <- readRDS(file = file.path(dir.output, "Ver6_rr_trunc_long_5May23.RDS"))
+# 
+# outputlist_ver112RR_T <- readRDS(file = file.path(dir.output, "Ver112_rr_trunc_long_5May23.RDS"))
+# 
+# outputlist_ver6RR_T <- readRDS(file = file.path(dir.output, "Ver6_rr_trunc_long_5May23.RDS"))
 
 # outputlist_ver2 <- readRDS(file = file.path(dir.output,"Ver2_long_25Apr23.RDS")) # With 2022 and till end Aug
 
@@ -308,6 +320,24 @@ RetroList_ver1RR_T <- retrospective.function(outputList = outputlist_ver1RR_T,
                                            testDays = testDays,
                                            CAN_hist = CAN_hist_new,
                                            pf = FALSE)
+
+RetroList_ver6RR_T <- retrospective.function(outputList = outputlist_ver6propRR_T,
+                                             testYears = testYears,
+                                             testDays = testDays,
+                                             CAN_hist = CAN_hist_new,
+                                             pf = FALSE)
+
+RetroList_ver1sstRR_T <- retrospective.function(outputList = outputlist_ver1sstRR_T,
+                                                testYears = testYears,
+                                                testDays = testDays,
+                                                CAN_hist = CAN_hist_new,
+                                                pf = FALSE)
+
+RetroList_ver6402RR_T <- retrospective.function(outputList = outputlist_ver6402RR_T,
+                                                testYears = testYears,
+                                                testDays = testDays,
+                                                CAN_hist = CAN_hist_new,
+                                                pf = FALSE)
 
 RetroList_ver11RR_T <- retrospective.function(outputList = outputlist_ver11RR_T,
                                              testYears = testYears,
@@ -663,6 +693,18 @@ rmseDF_ver1RR_T <- data.frame("Day" = testDays,
                             "RMSE" = RetroList_ver1RR_T$RMSE_by_day_vect,
                             "Version" = "ver1 RR Trunc")
 
+rmseDF_ver6RR_T <- data.frame("Day" = testDays,
+                              "RMSE" = RetroList_ver6RR_T$RMSE_by_day_vect,
+                              "Version" = "ver6 RR Trunc")
+
+rmseDF_ver1sstRR_T <- data.frame("Day" = testDays,
+                              "RMSE" = RetroList_ver1sstRR_T$RMSE_by_day_vect,
+                              "Version" = "ver1 SST RR Trunc")
+
+rmseDF_ver6402RR_T <- data.frame("Day" = testDays,
+                                 "RMSE" = RetroList_ver6402RR_T$RMSE_by_day_vect,
+                                 "Version" = "ver6402 RR Trunc")
+
 rmseDF_ver11RR_T <- data.frame("Day" = testDays,
                               "RMSE" = RetroList_ver11RR_T$RMSE_by_day_vect,
                               "Version" = "ver11 RR Trunc")
@@ -875,6 +917,8 @@ full_rmseDF <- rbind(
                      # rmseDF_ver102RR_T,
                      # rmseDF_ver112RR_T,
                      rmseDF_ver6RR_T,
+                     rmseDF_ver1sstRR_T,
+                     rmseDF_ver6402RR_T,
                      # rmseDF_ver11,
                      # rmseDF_ver101,
                      # rmseDF_ver2,
@@ -947,16 +991,16 @@ ggplot(full_rmseDF, aes(x = Day, y = RMSE, col = Version, shape= Version, alpha 
     # 10000,15000
                            
                            ))+
-  scale_colour_manual(name = "",
-  #                     # labels = c("PF","Ver 2.c", "Ver 2.c.0.1", "Ver 2.c.sd"),
-                      # labels = c("PF","No Eagle", "Eagle Prop Est", "GSI No Eagle","GSI & Eagle Prop Est"),
-                      labels = c("PF","Ver 1", "SST Est Prop"),
-                      values = c("red","gold","green","blue", "purple")) +
-  scale_shape_manual(name = "",
-                     # labels = c("PF","No Eagle", "Eagle Prop Est", "GSI No Eagle","GSI & Eagle Prop Est"),
-
-                     labels = c("PF","Ver 1", "SST Est Prop"),
-                     values = c(16,17,18,19,20))+
+  # scale_colour_manual(name = "",
+  # #                     # labels = c("PF","Ver 2.c", "Ver 2.c.0.1", "Ver 2.c.sd"),
+  #                     # labels = c("PF","No Eagle", "Eagle Prop Est", "GSI No Eagle","GSI & Eagle Prop Est"),
+  #                     labels = c("PF","Ver 1", "SST Est Prop"),
+  #                     values = c("red","gold","green","blue", "purple")) +
+  # scale_shape_manual(name = "",
+  #                    # labels = c("PF","No Eagle", "Eagle Prop Est", "GSI No Eagle","GSI & Eagle Prop Est"),
+  # 
+  #                    labels = c("PF","Ver 1", "SST Est Prop"),
+  #                    values = c(16,17,18,19,20))+
   # # scale_fill_manual(values = wes_palette("IsleofDogs1"),
   #                   labels = c("PF (New; SS Recon.)",
   #                              "PF (Old; Eagle+ Harvest)",
@@ -1014,6 +1058,18 @@ mapeDF_ver1RR <- data.frame("Day" = testDays,
 mapeDF_ver1RR_T <- data.frame("Day" = testDays,
                             "MAPE" = RetroList_ver1RR_T$MAPE_vect,
                             "Version" = "Ver 1 RR Trunc")
+
+mapeDF_ver6RR_T <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver6RR_T$MAPE_vect,
+                              "Version" = "Ver 6 RR Trunc")
+
+mapeDF_ver1sstRR_T <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver1sstRR_T$MAPE_vect,
+                              "Version" = "Ver 1sst RR Trunc")
+
+mapeDF_ver6402RR_T <- data.frame("Day" = testDays,
+                              "MAPE" = RetroList_ver6402RR_T$MAPE_vect,
+                              "Version" = "Ver 6402 RR Trunc")
 
 mapeDF_ver11 <- data.frame("Day" = testDays,
                           "MAPE" = RetroList_ver11$MAPE_vect,
@@ -1166,15 +1222,17 @@ mapeDF_PF_new <- data.frame("Day" = testDays,
 # Combine into one data-frame
 full_MAPE.df <- rbind(
                       # mapeDF_ver1,
-                      mapeDF_ver1RR,
+                      # mapeDF_ver1RR,
                       mapeDF_ver1RR_T,
+                      mapeDF_ver1sstRR_T,
+                      mapeDF_ver6402RR_T,
                       # mapeDF_ver11,
                       # mapeDF_ver101,
                       # mapeDF_ver2,
                       # mapeDF_ver2RR,
                       # mapeDF_ver21,
                       # mapeDF_ver2c,
-                      mapeDF_ver2cRR,
+                      # mapeDF_ver2cRR,
                       # mapeDF_ver2c1,
                       # mapeDF_ver2c1_strata,
                       # mapeDF_ver2cSST,
@@ -1204,6 +1262,7 @@ full_MAPE.df <- rbind(
                       # mapeDF_ver4.2,
                       # mapeDF_PF_new,
                       # mapeDF_ver5,
+                      mapeDF_ver6RR_T,
                       mapeDF_PF_new
                       )
 
@@ -1286,10 +1345,15 @@ ggplot(full_MAPE.df, aes(x = Day,
 
 # Percent Error Box Plots
 
-PE_ver1 <- as.data.frame(RetroList_ver1$PE_mat) %>%
+PE_ver1 <- as.data.frame(RetroList_ver1RR_T$PE_mat) %>%
   pivot_longer(cols = starts_with("20"),names_to =  "Year" , values_to = "PE" ) %>%
   as.data.frame()
 PE_ver1$version <- "Ver 1"
+
+PE_ver6 <- as.data.frame(RetroList_ver6RR_T$PE_mat) %>%
+  pivot_longer(cols = starts_with("20"),names_to =  "Year" , values_to = "PE" ) %>%
+  as.data.frame()
+PE_ver6$version <- "Ver 6"
 
 PE_ver11 <- as.data.frame(RetroList_ver11$PE_mat) %>%
   pivot_longer(cols = starts_with("20"),names_to =  "Year" , values_to = "PE" ) %>%
@@ -1477,12 +1541,13 @@ PE_pf_old <- as.data.frame(RetroList_pf_old$PE_mat) %>%
 PE_pf_old$version <- "PF"
 
 peDF_total <- rbind(
-                    # PE_ver1,
+                    PE_ver1,
+                    PE_ver6
                     # PE_ver101,
                     # PE_ver2,
                     # PE_ver21,
-                    PE_ver2c,
-                    PE_ver2cRR
+                    # PE_ver2c,
+                    # PE_ver2cRR
                     # PE_ver2c1,
                     # PE_ver2c1_strata
                     # PE_ver2cSST
@@ -1518,7 +1583,7 @@ peDF_total <- rbind(
 
 # For plotting PF point shape 
 
-newDF <- left_join(x = pf_hist, y = CAN_hist_old)
+newDF <- left_join(x = pf_hist, y = CAN_hist_new)
 # newDF <- left_join(x = newDF, y = CAN_hist_old, "Year")
 
 # newDF$PF_new <- (newDF$Weighted_Forecast-newDF$can.mean.x)/newDF$can.mean.x
@@ -1529,7 +1594,7 @@ newDF$PF_old <- (newDF$mean-newDF$can.mean)/newDF$can.mean
 
 # long_df <- newDF %>% pivot_longer(cols = c(PF_new,PF_old)) %>% as.data.frame()
 
-ggplot(peDF_total, aes(x = Year, y = PE, fill =version))+
+ggplot(peDF_total, aes(x = Year, y = PE*100, fill =version))+
   geom_boxplot(aes()) + 
   labs(fill = "")+
   geom_point(data = newDF,
@@ -1566,8 +1631,9 @@ ggplot(peDF_total, aes(x = Year, y = PE, fill =version))+
         panel.border = element_rect(color = "black", fill = NA),
         plot.background = element_blank(),
         panel.background = element_blank(),
-        text = element_text(size = 18),
-        axis.text = element_text(angle = 90))
+        text = element_text(size = 12),
+        axis.text = element_text(angle = 90))+
+  facet_wrap(~Year, scales = "free")
   # ggtitle("New Can_hist ver 2")
 
 
@@ -1678,18 +1744,14 @@ gg <- outPlots(outputList = model.output,
 
 # List to hold plots
 plots_list <- list()
-for (i in 1:length(outputlist_ver1_T)){
+for (i in 1:length(ver102_RR_T)){
   
   
-  plots_list[[i]] <- outPlots(outputList = outputlist_ver1RR_T[[i]],
-                                        CAN_hist = CAN_hist_new,
-                                        GSI = F,
-                                        Retrospective = TRUE,
-                                        eagle = FALSE)
+  plots_list[[i]] <- density.func(outputList = ver102_RR_T[[i]], CAN_hist = CAN_hist_new)
 }
 
 # Vector of names form plot list
-test<-names(outputlist_ver1_T)
+test<-names(ver102_RR_T)
 names(plots_list)<-test
 
 
@@ -1715,7 +1777,7 @@ figure<-ggarrange(plots_old_can_ver3.5$`2021_158`$DensPlot,
                                     color = "black",
                                     family = "serif"))
 
-figure<-ggarrange(plots_list$`2022_158`$PredPlot + labs(x = "", y ="")+
+figure<-ggarrange(plots_list$`2022_158` + labs(x = "", y ="")+
                     theme_light(),
                   plots_list$`2022_168`$PredPlot + labs(x = "", y ="")+
                     theme_light(),

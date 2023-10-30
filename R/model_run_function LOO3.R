@@ -33,7 +33,8 @@ InSeasonProjection <- function(model.version,      # Model version to run. (char
                                pf_hist,            # PF for 2007-present
                                Eagle_hist,         # Eagle sonar passage
                                PSS_sd,             # Variance estimates for PSS
-                               norton.sst,         # SST 
+                               norton.sst,         # SST
+                               Emmonak_Air_Temp,   # Air Temp
                                prior.df.log,       # priors for logistic params
                                prior.df.norm,      # priors for normal params
                                savefit = FALSE,    # Whether to save the fit object
@@ -630,42 +631,60 @@ InSeasonProjection <- function(model.version,      # Model version to run. (char
                                             PSS_sd$Year == myYear] ))
   
   # # SST Info
-  may.sst.hist <- norton.sst$month.mean[norton.sst$month == 5 &
-                                          norton.sst$year != 1996 &
-                                          # norton.sst$year != 2020 &
-                                          # norton.sst$year >= startYearPSS &
-                                          norton.sst$year != myYear]
+  # may.sst.hist <- norton.sst$month.mean[norton.sst$month == 5 &
+  #                                         norton.sst$year != 1996 &
+  #                                         norton.sst$year >= 2000 &
+  #                                         # norton.sst$year >= startYearPSS &
+  #                                         norton.sst$year != myYear]
+  # 
+  # yearSST <- norton.sst$year[norton.sst$month == 5 &
+  #                              norton.sst$year != 1996 &
+  #                              norton.sst$year >= 2000 &
+  #                              # norton.sst$year >= startYearPSS &
+  #                              norton.sst$year != myYear]
+  # 
+  # n_yearSST <- length(yearSST)
+  # 
+  # may.sst.curr <-norton.sst$month.mean[norton.sst$month == 5 &
+  #                                        norton.sst$year == myYear]
+  # Point SST 2000 to 2022 for may
+  may.sst.hist <- norton.sst$sst[norton.sst$year != myYear]
   
-  yearSST <- norton.sst$year[norton.sst$month == 5 &
-                               norton.sst$year != 1996 &
-                               # norton.sst$year != 2020 &
-                               # norton.sst$year >= startYearPSS &
-                               norton.sst$year != myYear]
+  yearSST <- norton.sst$year[norton.sst$year != myYear]
+  
+  names(may.sst.hist) <- yearSST
   
   n_yearSST <- length(yearSST)
   
-  may.sst.curr <-norton.sst$month.mean[norton.sst$month == 5 &
-                                         norton.sst$year == myYear]
-  
-  yearSST <- norton.sst$year[norton.sst$month == 5 &
-                               norton.sst$year != 1996 &
-                               # norton.sst$year != 2020 &
-                               # norton.sst$year >= startYearPSS &
-                               norton.sst$year != myYear]
+  # Current year sst
+  may.sst.curr <-norton.sst$sst[norton.sst$year == myYear]
   
   n_sst <- length(may.sst.hist)
+  
+  # Emmonak Air
+  # Air Temp Data
+  # NOTE that 2020 is interpolated with sst airtemp relationship
+  april.air.hist <- Emmonak_Air_Temp$air.mean[Emmonak_Air_Temp$year >= 2000 &
+                                                Emmonak_Air_Temp$year != myYear]
+  
+  yearAir <- Emmonak_Air_Temp$year[Emmonak_Air_Temp$year >= 2000 &
+                                     Emmonak_Air_Temp$year != myYear ]
+  
+  names(april.air.hist) <- yearAir
+  
+  n.year.air <- length(yearAir)
+  
+  april.air.curr <- Emmonak_Air_Temp$air.mean[Emmonak_Air_Temp$year == myYear ]
   
   # PSS timing deviations###################################################
   
   # Get vector of historic midpoints for all years excluding myYear
-  hist.midpoint <- logistic.all$mid[logistic.all$year != myYear  
-                                    # & logistic.all$year >= startYearPSS
-  ]
+  hist.midpoint <- logistic.all$mid[logistic.all$year != myYear &
+                                      logistic.all$year >= 2000]
   
-  # Name each entry with the year
-  names(hist.midpoint) <-logistic.all$year[logistic.all$year != myYear 
-                                           # & logistic.all$year >= startYearPSS
-  ]
+  # Name eache entry with the year
+  names(hist.midpoint) <-logistic.all$year[logistic.all$year != myYear &
+                                             logistic.all$year >= 2000]
   
   # Get historic mean mp
   avg_midpoint <- mean(hist.midpoint)
@@ -714,7 +733,11 @@ InSeasonProjection <- function(model.version,      # Model version to run. (char
                "ps_mu_hist" = runif(n_yearPSS,174,176),
                "ps_sd_hist" = runif(n_yearPSS,5,7),
                "sigma" = runif(1,2,3),
-               "sigma_hist" = runif(n_yearPSS,2,3))
+               "sigma_hist" = runif(n_yearPSS,2,3),
+               "beta_sst" = runif(1,-2,-1),
+               "sigma_env" = runif(1,2.5,3),
+               "alpha_env" = runif(1,177,178)
+               )
     }
     
     
@@ -725,8 +748,8 @@ InSeasonProjection <- function(model.version,      # Model version to run. (char
   if(normal == FALSE & logistic == FALSE){
     
     inits <- function(){ 
-      list( alpha = runif(1,10000,50000),
-            beta = runif(1,0,2),
+      list( alpha = runif(1,150000,200000),
+            beta = runif(1,0,0.5),
             sigma = runif(1,0,2),
             ln_phi = runif(1,-1,1),
             propCAN_logit = runif(n_dayPSS,0,1)
@@ -804,7 +827,10 @@ InSeasonProjection <- function(model.version,      # Model version to run. (char
                           "loc_devMP_allYears" = loc.devMP.allYears,
                           "PSS_mat_prop_all" = PSS_mat_prop_all,
                           "dev_hist" = deviations.mp,
-                          "hist_MP" = hist.midpoint
+                          "hist_MP" = hist.midpoint,
+                          "n_yearAir" = n.year.air,
+                          "april_air_hist" = april.air.hist,
+                          "april_air_curr" = april.air.curr
                           
               ),
               init = inits_ll,

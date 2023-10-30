@@ -9,7 +9,7 @@ output:
       bootswatch: cerulean
 ---
 
-# July 19, 2023
+# June 3, 2023
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, results = FALSE, warning = FALSE)
 library(kableExtra)
@@ -50,9 +50,9 @@ dir.data <- file.path(wd,"Data")
 dir.R <- file.path(wd,"R")
 
 # Read in the file as xlsx !!!CHANGE FILE HERE!!!!!!!!!
-PSS <- read_xlsx(file.path(dir.data,"ADFG PSS Daily/Yukon Escapement Daily 19July23.xlsx"),skip = 3)
+PSS <- read_xlsx(file.path(dir.data,"ADFG PSS Daily/Yukon Escapement Daily 27Aug23.xlsx"),skip = 3)
 
-ESS <- read_xlsx(file.path(dir.data,"ADFG Eagle Daily/Yukon Escapement Daily Eagle 19July23.xlsx"),skip = 3)
+ESS <- read_xlsx(file.path(dir.data,"ADFG Eagle Daily/Yukon Escapement Daily Eagle 27Aug23.xlsx"),skip = 3)
 
 # Add a day column with the appropriate day ranges
 PSS$Day <- c(148:252)
@@ -137,6 +137,9 @@ PSS_sd <- readRDS(file = file.path(dir.data,"PSS SD 1995_2021.RDS"))
 # SST May data
 norton.sst <- readRDS(file = file.path(dir.data,"norton.sst 6Apr23.RDS"))
 
+# Emmonak April air temp
+Emmonak_Air_Temp <- readRDS(file = file.path(dir.data,"Emmonak Air Interpolated 2020 10Aug23.RDS"))
+
 # Control Section ##################################################################
 model.version <- "4.0.2"
 
@@ -148,14 +151,14 @@ myYear <- 2023
 # 
 # # Set my day using the myDay_func function
 # #  Enter month and day as numbers
-myDay <- myDay_func(Month = 7, Day = 19)
+myDay <- myDay_func(Month = 6, Day = 30)
 
 # Days for plotting date
 testDays <- seq(from = 153, to = 213, by = 5)
 
 # MCMC Parameters
 n.chains <- 4
-n.iter <- 7000;#5e4
+n.iter <- 5000;#5e4
 n.thin <- 2
 
 
@@ -182,6 +185,7 @@ model.output <-InSeasonProjection(model.version = model.version,
                                   startDayPSS = 148,
                                   startYearPSS = 2005,
                                   PSS_sd = PSS_sd,
+                                  Emmonak_Air_Temp = Emmonak_Air_Temp,
                                   norton.sst = norton.sst)
 
 run.size.ecdf <- ecdf(model.output$pars$RunSize)
@@ -190,7 +194,7 @@ prob.escapement <- run.size.ecdf(42500)
 
 ```
 
-Today's forecast using the Bayesian inseason projection for Canadian-origin Chinook salmon returning to the Yukon River is found below. Given the preseason forecast and the observed Chinook salmon passage at PSS and Eagle Sonar up to July 19, 2023, there is a `r (1-prob.escapement)*100` % chance of meeting the lower range of the interim management escapement goal of 42,500-55,000 Canadian-origin Chinook salmon.
+Today's forecast using the Bayesian inseason projection for Canadian-origin Chinook salmon returning to the Yukon River is found below. Given the preseason forecast and the observed Chinook salmon passage at PSS and Eagle Sonar up to August 27, 2023, there is a `r (1-prob.escapement)*100` % chance of meeting the lower range of the interim management escapement goal of 42,500-55,000 Canadian-origin Chinook salmon.
 
 For this forecast, model version 4.0.2 is used (Normal curve fit to daily PSS passage and Eagle proportion est).
 

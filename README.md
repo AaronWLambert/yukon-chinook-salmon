@@ -4,7 +4,7 @@
 A management tool created to generate an inseason projection for each day during the summer Chinook salmon run on the Yukon River to estimate the end-of-season escapement of Canadian-origin Chinook salmon into Canda. This method utilizes a Bayesian updating approach using Rstan in R. Users can generate projections retrospectively for model testing and selection purposes or to generate inseason projections for the current year.
 ## Folders
 |File|Description|
-|---|---|
+|:---:|---|
 |Data|Data files that are used in the projection model. These data are generally preprocessed in an R script and fed into the Stan model.|
 |R|Scripts used to preprocess data and to call the Stan model using Rstan. The most general script is called Yukon Inseason Forecast, which can easily be used to generate predictions for a single day in any year of interest.|
 |Figs|Plots and figures generated for analysis and visualization.|
